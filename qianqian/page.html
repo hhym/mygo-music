@@ -9074,6 +9074,9 @@ function PluginsPage({
   }
   react.exports.useEffect(() => {
     reload();
+    const h = () => reload();
+    window.addEventListener("hulu-plugin-installed", h);
+    return () => window.removeEventListener("hulu-plugin-installed", h);
   }, []);
   function flash(t2) {
     setMsg(t2);
@@ -9311,7 +9314,9 @@ function PluginsPage({
           children: "fetch"
         }), "\uFF09\u3002 \u300C\u9009 zip\u300D\u76F4\u63A5\u6311\u6253\u5305\u597D\u7684\u63D2\u4EF6\u538B\u7F29\u5305\uFF0C\u300C\u9009\u6587\u4EF6\u5939\u300D\u76F4\u63A5\u6311\u63D2\u4EF6\u76EE\u5F55\uFF08\u4F8B\u5982 QQ \u63D2\u4EF6\u4ED3\u5E93\u91CC\u7684 ", /* @__PURE__ */ jsx("code", {
           children: "dist"
-        }), "\uFF09\uFF1B \u4E5F\u53EF\u4EE5\u5728\u4E0A\u9762\u586B .zip \u7684\u4E0B\u8F7D\u5730\u5740\u3002"]
+        }), "\uFF09\uFF1B \u4E5F\u53EF\u4EE5\u5728\u4E0A\u9762\u586B .zip \u7684\u4E0B\u8F7D\u5730\u5740\uFF1B", /* @__PURE__ */ jsx("b", {
+          children: "\u6216\u8005\u5E72\u8106\u628A .zip / \u63D2\u4EF6\u6587\u4EF6\u5939\u76F4\u63A5\u62D6\u8FDB\u7A97\u53E3"
+        }), "\uFF0C\u62D6\u8FDB\u6765\u5C31\u88C5\u597D\u4E86\u3002"]
       }), /* @__PURE__ */ jsxs("div", {
         className: "plug-install",
         children: [/* @__PURE__ */ jsx("input", {

@@ -65,6 +65,45 @@ func main() {
 		win.OnClose(func(e *mygo.CloseEvent) { bootLog("窗口收到关闭请求") })
 		win.OnClosed(func() { bootLog("窗口已关闭") })
 
+		// 拖放装插件：把 .zip（或插件文件夹）直接拖进窗口就装好，不经过系统
+		// 文件对话框 —— 那条路要走 mygo.Dialog.Open，在无边框透明窗口上不一定
+		// 稳，拖放拿的是真实路径，最省事。
+		win.OnFileDrop(func(e *mygo.FileDropEvent) {
+			for _, p := range e.Paths {
+				low := strings.ToLower(p)
+				if !strings.HasSuffix(low, ".zip") {
+					if fi, err := os.Stat(p); err != nil || !fi.IsDir() {
+						continue
+					}
+				}
+				prev, _ := a.Plugins()
+				before := len(prev)
+				r := a.InstallPluginFile(p)
+				bootLog("拖放安装 %s → installedId=%q err=%q（装前 %d 个，装后 %d 个）",
+					p, r.InstalledID, r.Err, before, len(r.Plugins))
+				if page := win.Page(); page != nil {
+					_, _ = page.Eval(`window.dispatchEvent(new CustomEvent('hulu-plugin-installed'))`)
+				}
+			}
+		})
+
+		// 自检通道：QQJT_SELFTEST_ZIP 指向一个插件 zip，启动后直接走一遍
+		// 「解包 → 装进 plugins/ → 重新扫描 → 删掉」的完整链路，结果写日志。
+		// 只为了在没有控制台的情况下确认后端这条线通不通，不影响正常启动。
+		if zip := os.Getenv("QQJT_SELFTEST_ZIP"); zip != "" {
+			go func() {
+				time.Sleep(3 * time.Second)
+				r := a.InstallPluginFile(zip)
+				bootLog("自检 zip 安装: installedId=%q err=%q 插件数=%d", r.InstalledID, r.Err, len(r.Plugins))
+				if r.InstalledID != "" {
+					_, rmErr := a.RemovePlugin(r.InstalledID)
+					bootLog("自检清理: err=%q", rmErr)
+				}
+				time.Sleep(1500 * time.Millisecond)
+				mygo.App.Quit()
+			}()
+		}
+
 		// 页面 <title> 是「千千静听 · Wails 桌面版」，会盖掉窗口标题、和
 		// Wails 版播放器撞名，这里拦下来保持自己的名字。
 		if p := win.Page(); p != nil {
