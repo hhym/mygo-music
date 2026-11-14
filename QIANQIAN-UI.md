@@ -11,7 +11,9 @@
 
 ```bash
 # Windows（需要 WebView2，Win11 自带）
-go build -o qqjt.exe ./cmd/qqjt
+# -H windowsgui 必须有：不带它 go 生成的是控制台子系统程序，
+# 双击会多弹一个全黑的控制台窗口盖在播放器上，看着像界面没渲染出来。
+go build -ldflags "-H windowsgui" -o qqjt.exe ./cmd/qqjt
 ```
 
 跑起来：`./qqjt`，界面就是千千静听的桌面版。
@@ -56,9 +58,14 @@ MyGo 的 `LoadHTML` 走 WebView2 的 `NavigateToString`，页面 origin 是 `abo
 主题，一读就白屏。
 
 所以界面改由程序自带的本地代理服务提供：`ensureProxy` 里顺手挂了 `/` 路由返回
-`page.html`，窗口 `LoadURL("http://127.0.0.1:<port>/")`。真实 origin 下
+`page.html`，窗口创建时就把这个地址交给 `WindowOptions.URL`（不是先建空窗口、
+过一会儿再 `LoadURL`——那样 Windows 上容易留下一个空窗口）。真实 origin 下
 localStorage 正常，音频代理也变成同源。万一哪天又落到 `about:blank`，
 页面顶部的 shim 里还有一层 localStorage 内存兜底，至少不会白屏。
+
+窗口标题另外锁了：页面 `<title>` 写的是「千千静听 · Wails 桌面版」，会覆盖掉
+窗口自己的名字、还和 Wails 版播放器撞名，所以注册了 `OnPageTitleUpdated`
+阻止它，窗口始终叫「千千静听 · MyGo」。
 
 ## 绑定层为什么多一个 API
 

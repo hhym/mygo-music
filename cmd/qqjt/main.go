@@ -30,34 +30,41 @@ func main() {
 	a := qianqian.NewApp()
 	mygo.BindAs("App", qianqian.NewAPI(a))
 	mygo.App.WhenReady(func() {
-		win := mygo.NewWindow(mygo.WindowOptions{
-			Title:     "千千静听",
+		// 先把本地服务起起来，拿到真实 http origin，再把地址交给窗口创建。
+		// 早先的做法是先建空窗口、1.2 秒后再 LoadURL，Windows 上会多出一个
+		// 空白的第二个窗口（WebView2 没挂到我们建的窗口上），桌面上看到就是
+		// 一块黑。窗口创建时直接给 URL 走 mygo 的标准路径，只有一个窗口。
+		a.Start()
+		url := a.PageURL()
+		opts := mygo.WindowOptions{
+			Title:     "千千静听 · MyGo",
 			Width:     1190,
 			Height:    780,
 			MinWidth:  900,
 			MinHeight: 560,
-		})
+			Page:      mygo.PageOptions{DevTools: mygo.DevToolsEnabled},
+		}
+		if url != "" {
+			opts.URL = url
+		}
+		win := mygo.NewWindow(opts)
 		a.AttachWindow(win)
-		a.Start()
-		bootLog("窗口已建，page url: %q", a.PageURL())
+		bootLog("窗口已建，page url: %q", url)
 
-		// 导航到本地服务（真实 origin，localStorage 可用）。窗口刚建好时
-		// webview 可能还没接管，所以稍等一拍；再等两秒回读，仍没加载出来
-		// 就退回内联页面（那种情况下 localStorage 由页面里的内存版顶着）。
+		// 页面 <title> 是「千千静听 · Wails 桌面版」，会盖掉窗口标题、和
+		// Wails 版播放器撞名，这里拦下来保持自己的名字。
+		if p := win.Page(); p != nil {
+			p.OnPageTitleUpdated(func(e *mygo.TitleEvent) { e.PreventDefault() })
+		}
+
+		// 回读一次真实状态，方便从日志判断到底加载到了什么。
 		go func() {
-			time.Sleep(1200 * time.Millisecond)
+			time.Sleep(2500 * time.Millisecond)
 			page := win.Page()
 			if page == nil {
-				bootLog("page handle 是 nil，无法加载")
+				bootLog("page handle 是 nil，无法回读")
 				return
 			}
-			url := a.PageURL()
-			if url != "" {
-				if err := page.LoadURL(url); err != nil {
-					bootLog("LoadURL 失败: %v", err)
-				}
-			}
-			time.Sleep(2500 * time.Millisecond)
 			v, err := page.Eval("document.location.href + '|' + document.body.innerHTML.length")
 			bootLog("加载后状态: %v err=%v", v, err)
 			bad := err != nil
