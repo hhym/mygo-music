@@ -6,6 +6,7 @@ import (
 	"mygo-music/qianqian"
 
 	"github.com/egoist/mygo"
+	"github.com/egoist/mygo/ui"
 )
 
 // 葫芦音乐的皮肤界面和迷你卡片：装在原生界面旁边的两个可选窗口。
@@ -106,5 +107,25 @@ func closeHulu() {
 	}
 	if hulu.mini != nil {
 		hulu.mini.Close()
+	}
+}
+
+// huluRow 是侧栏底部那一行入口：原生界面的其余部分一个像素都没动，整个
+// 「加装」在界面上就只有这一行和菜单里的两项。
+func (a *app) huluRow(c *ui.Context) {
+	p := a.pal
+	b := ui.ButtonBase(c.Key("hulu-skin")).Height(34).PaddingX(10).Gap(10).Radius(8).
+		AlignItems(ui.Center).Justify(ui.Start).FocusRing(false)
+	if b.Hovered() {
+		b.Background(p.hover)
+	}
+	b.Label("葫芦音乐皮肤")
+	b.Children(func() {
+		ui.Icon(c, iconShirt).Size(17, 17).TextColor(p.muted)
+		ui.Text(c, "葫芦音乐皮肤").FontSize(13).FontWeight(500).TextColor(p.muted).
+			SingleLine().Shrink(1).MinWidth(0)
+	})
+	if b.Clicked() {
+		a.openHuluSkin()
 	}
 }

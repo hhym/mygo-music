@@ -238,6 +238,7 @@ func (a *app) sidebar(c *ui.Context) {
 			}
 		})
 
+		a.huluRow(c)
 		a.accountRow(c)
 	})
 }
