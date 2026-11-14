@@ -153,7 +153,7 @@ func (a *App) InstallPluginURL(rawURL string) PickResult {
 	if res.StatusCode != 200 {
 		return PickResult{Plugins: a.scanPlugins(), Err: fmt.Sprintf("下载失败：HTTP %d", res.StatusCode)}
 	}
-	body, err := io.ReadAll(io.LimitReader(res.Body, 20<<20))
+	body, err := io.ReadAll(io.LimitReader(res.Body, 60<<20))
 	if err != nil {
 		return PickResult{Plugins: a.scanPlugins(), Err: "读取失败：" + err.Error()}
 	}

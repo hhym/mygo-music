@@ -241,4 +241,8 @@ func (x API) WinMoveBy(dx any, dy any) string {
 }
 
 // Quit 迷你卡右上角 ×：直接退出进程。
+func (x API) WinMinimize() { x.App.WinMinimize() }
+
+func (x API) WinClose() { x.App.WinClose() }
+
 func (x API) Quit() { x.App.Quit() }

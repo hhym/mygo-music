@@ -19,6 +19,20 @@ func (a *App) Quit() {
 	mygo.App.Quit()
 }
 
+// WinMinimize 供页面自绘的最小化按钮用：无边框窗口没有系统标题栏了。
+func (a *App) WinMinimize() {
+	if a.win != nil {
+		a.win.Minimize()
+	}
+}
+
+// WinClose 关掉这个窗口。无边框窗口没有系统关闭按钮，页面自己画的那个走这里。
+func (a *App) WinClose() {
+	if a.win != nil {
+		a.win.Close()
+	}
+}
+
 // App 是 Wails 绑定到前端的入口。所有首字母大写的方法前端都能直接调。
 type App struct {
 	win    *mygo.Window

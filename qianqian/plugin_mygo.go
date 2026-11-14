@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -21,19 +22,19 @@ import (
 
 // PluginManifest 是 plugin.json 的内容，只取桌面版用得上的字段。
 type PluginManifest struct {
-	ID            string            `json:"id"`
-	Name          string            `json:"name"`
-	Version       string            `json:"version"`
-	MinAppVersion string            `json:"minAppVersion"`
-	Main          string            `json:"main"`
-	Author        string            `json:"author"`
-	Description   string            `json:"description"`
-	Homepage      string            `json:"homepage"`
-	Playback      string            `json:"playback"`
-	Icon          string            `json:"icon"`
+	ID            string              `json:"id"`
+	Name          string              `json:"name"`
+	Version       string              `json:"version"`
+	MinAppVersion string              `json:"minAppVersion"`
+	Main          string              `json:"main"`
+	Author        string              `json:"author"`
+	Description   string              `json:"description"`
+	Homepage      string              `json:"homepage"`
+	Playback      string              `json:"playback"`
+	Icon          string              `json:"icon"`
 	Permissions   map[string][]string `json:"permissions"`
-	Navigation    []map[string]any  `json:"navigation"`
-	Settings      []map[string]any  `json:"settings"`
+	Navigation    []map[string]any    `json:"navigation"`
+	Settings      []map[string]any    `json:"settings"`
 }
 
 func pluginDir(id string) string { return filepath.Join(pluginsDir(), id) }
@@ -110,7 +111,7 @@ func (a *App) PluginFile(id, rel string) (string, string) {
 	b, err := os.ReadFile(p)
 	if err != nil {
 		return "", "读不到文件：" + err.Error()
-    }
+	}
 	return string(b), ""
 }
 
@@ -217,39 +218,92 @@ func (a *App) installPluginDir(src string) (string, error) {
 	return id, nil
 }
 
-// installPluginZip 解出压缩包里的 MyGo 插件目录（含 plugin.json 的那一层）再安装。
+// installPluginZip 解出压缩包里的所有 MyGo 插件目录再逐个安装。
+//
+// 一个包里可能装着好几个插件（官方发布的 plugins.zip 就有十几个），也可能只有
+// 一个；plugin.json 既可能在压缩包根目录（正式发布包都是这样），也可能在
+// xxx-main/ 这种一层目录里。早先的实现用「前缀为空」同时表示「在根目录」和
+// 「没找到」，导致根目录型压缩包全被误判成「不是插件包」——绝大多数官方发布包
+// 都是根目录型，这就是「zip 装不上」的真正原因。
 func (a *App) installPluginZip(data []byte) (string, error) {
 	zr, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
 	if err != nil {
 		return "", fmt.Errorf("压缩包解析失败：%w", err)
 	}
-	// 找到 plugin.json 所在目录前缀
-	prefix := ""
+
+	// 收集所有 plugin.json 所在目录，按层级从浅到深。「.」表示在压缩包根目录。
+	var dirs []string
+	seen := map[string]bool{}
 	for _, f := range zr.File {
-		if strings.EqualFold(filepath.Base(f.Name), "plugin.json") {
-			prefix = strings.TrimSuffix(f.Name, "plugin.json")
-			break
+		if !strings.EqualFold(path.Base(f.Name), "plugin.json") {
+			continue
+		}
+		d := path.Dir(f.Name)
+		if d == "." {
+			d = ""
+		}
+		if seen[d] {
+			continue
+		}
+		seen[d] = true
+		dirs = append(dirs, d)
+	}
+	if len(dirs) == 0 {
+		return "", fmt.Errorf("压缩包里没有 plugin.json，不是 MyGo 插件包（MyGo 插件要有 plugin.json + index.js）")
+	}
+	sort.Slice(dirs, func(i, j int) bool {
+		if len(dirs[i]) == len(dirs[j]) {
+			return dirs[i] < dirs[j]
+		}
+		return len(dirs[i]) < len(dirs[j])
+	})
+
+	var ids, errs []string
+	for _, d := range dirs {
+		id, err := a.extractPluginDir(zr, d)
+		if err != nil {
+			errs = append(errs, err.Error())
+			continue
+		}
+		if id != "" {
+			ids = append(ids, id)
 		}
 	}
-	if prefix == "" {
-		return "", fmt.Errorf("压缩包里没有 plugin.json，不是 MyGo 插件包")
+	if len(ids) == 0 {
+		if len(errs) > 0 {
+			return "", fmt.Errorf("%s", strings.Join(errs, "；"))
+		}
+		return "", fmt.Errorf("压缩包里的插件都没装成功")
 	}
+	return ids[0], nil
+}
+
+// extractPluginDir 把压缩包里 prefix 这一层（prefix 为空表示根目录）解到临时
+// 目录，再按目录型插件安装。同一个包里根目录和 dist/ 各有一份清单时，先装根
+// 再装 dist，最后留下的是 dist 里的构建产物。
+func (a *App) extractPluginDir(zr *zip.Reader, prefix string) (string, error) {
 	tmp, err := os.MkdirTemp("", "hulu-plugin-*")
 	if err != nil {
 		return "", err
 	}
 	defer os.RemoveAll(tmp)
 	for _, f := range zr.File {
-		if !strings.HasPrefix(f.Name, prefix) {
-			continue
+		name := strings.TrimPrefix(f.Name, "./")
+		rel := name
+		if prefix != "" {
+			if !strings.HasPrefix(name, prefix+"/") {
+				continue
+			}
+			rel = strings.TrimPrefix(name, prefix+"/")
 		}
-		rel := strings.TrimPrefix(f.Name, prefix)
-		if rel == "" {
+		if rel == "" || filepath.IsAbs(rel) || strings.Contains(rel, "..") {
 			continue
 		}
 		out := filepath.Join(tmp, filepath.FromSlash(rel))
 		if f.FileInfo().IsDir() {
-			os.MkdirAll(out, 0o755)
+			if err := os.MkdirAll(out, 0o755); err != nil {
+				return "", err
+			}
 			continue
 		}
 		if err := os.MkdirAll(filepath.Dir(out), 0o755); err != nil {
@@ -279,7 +333,7 @@ func scanMyGoPlugins(state map[string]bool) []Plugin {
 	dir := pluginsDir()
 	entries, err := os.ReadDir(dir)
 	if err != nil {
-		 return []Plugin{}
+		return []Plugin{}
 	}
 	out := make([]Plugin, 0)
 	for _, e := range entries {
