@@ -11943,6 +11943,37 @@ function markMygoHost() {
       once: true
     });
 }
+function closeApp() {
+  var _a, _b, _c, _d, _e, _f, _g, _h;
+  const w2 = window;
+  try {
+    (_d = (_c = (_b = (_a = w2.go) == null ? void 0 : _a.main) == null ? void 0 : _b.App) == null ? void 0 : _c.Quit) == null ? void 0 : _d.call(_c);
+  } catch {
+  }
+  try {
+    (_h = (_g = (_f = (_e = w2.mygo) == null ? void 0 : _e.runtime) == null ? void 0 : _f.window) == null ? void 0 : _g.close) == null ? void 0 : _h.call(_g);
+  } catch {
+  }
+  window.setTimeout(() => {
+    var _a2, _b2, _c2, _d2;
+    try {
+      (_d2 = (_c2 = (_b2 = (_a2 = w2.mygo) == null ? void 0 : _a2.runtime) == null ? void 0 : _b2.window) == null ? void 0 : _c2.close) == null ? void 0 : _d2.call(_c2);
+    } catch {
+    }
+  }, 350);
+}
+function minimizeApp() {
+  var _a, _b, _c, _d, _e, _f, _g, _h;
+  const w2 = window;
+  try {
+    (_d = (_c = (_b = (_a = w2.go) == null ? void 0 : _a.main) == null ? void 0 : _b.App) == null ? void 0 : _c.WinMinimize) == null ? void 0 : _d.call(_c);
+  } catch {
+  }
+  try {
+    (_h = (_g = (_f = (_e = w2.mygo) == null ? void 0 : _e.runtime) == null ? void 0 : _f.window) == null ? void 0 : _g.minimize) == null ? void 0 : _h.call(_g);
+  } catch {
+  }
+}
 markMygoHost();
 function applyDefaultLookOnce() {
   try {
@@ -13476,33 +13507,32 @@ function App() {
   return /* @__PURE__ */ jsxs("div", {
     className: "app" + (layout === "desk" ? " desk-mode" : " skin") + (mini ? " mini-mode" : ""),
     "data-skin": skinTheme,
-    children: [MYGO_HOST && !mini && /* @__PURE__ */ jsxs("div", {
-      className: "mygo-dragbar",
-      children: [/* @__PURE__ */ jsx("span", {
-        className: "mygo-bar-title",
-        children: "\u846B\u82A6\u97F3\u4E50"
-      }), /* @__PURE__ */ jsx("button", {
-        className: "mygo-win-btn",
-        title: "\u6700\u5C0F\u5316",
-        onClick: () => {
-          var _a2, _b2, _c2, _d2;
-          try {
-            (_d2 = (_c2 = (_b2 = (_a2 = window.mygo) == null ? void 0 : _a2.runtime) == null ? void 0 : _b2.window) == null ? void 0 : _c2.minimize) == null ? void 0 : _d2.call(_c2);
-          } catch {
-          }
-        },
-        children: "\u2014"
-      }), /* @__PURE__ */ jsx("button", {
-        className: "mygo-win-btn close",
-        title: "\u5173\u95ED",
-        onClick: () => {
-          var _a2, _b2, _c2, _d2;
-          try {
-            (_d2 = (_c2 = (_b2 = (_a2 = window.mygo) == null ? void 0 : _a2.runtime) == null ? void 0 : _b2.window) == null ? void 0 : _c2.close) == null ? void 0 : _d2.call(_c2);
-          } catch {
-          }
-        },
-        children: "\xD7"
+    children: [MYGO_HOST && !mini && /* @__PURE__ */ jsxs(Fragment, {
+      children: [/* @__PURE__ */ jsx("div", {
+        className: "mygo-dragbar",
+        children: /* @__PURE__ */ jsx("span", {
+          className: "mygo-bar-title",
+          children: "\u846B\u82A6\u97F3\u4E50"
+        })
+      }), /* @__PURE__ */ jsxs("div", {
+        className: "mygo-winctl",
+        children: [/* @__PURE__ */ jsx("button", {
+          className: "mygo-win-btn",
+          title: "\u6700\u5C0F\u5316",
+          style: {
+            "--app-region": "no-drag"
+          },
+          onClick: minimizeApp,
+          children: "\u2014"
+        }), /* @__PURE__ */ jsx("button", {
+          className: "mygo-win-btn close",
+          title: "\u5173\u95ED",
+          style: {
+            "--app-region": "no-drag"
+          },
+          onClick: closeApp,
+          children: "\xD7"
+        })]
       })]
     }), layout === "desk" ? /* @__PURE__ */ jsxs("div", {
       className: "desk",
@@ -16496,11 +16526,15 @@ body.mygo-frameless .app.mini-mode{padding-top:0;background:transparent}
 body.qq-mini{background:transparent}
 body.mygo-frameless:has(.app.mini-mode){background:transparent}
 
-.mygo-dragbar{position:fixed;left:0;right:0;top:0;height:30px;display:flex;align-items:center;gap:2px;
-  padding:0 6px 0 12px;background:var(--panel);border-bottom:1px solid var(--line);
+.mygo-dragbar{position:fixed;left:0;right:0;top:0;height:30px;display:flex;align-items:center;
+  padding:0 84px 0 12px;background:var(--panel);border-bottom:1px solid var(--line);
   color:var(--dim);font-size:12px;z-index:60;--app-region:drag}
 .mygo-bar-title{flex:1;line-height:30px;letter-spacing:.5px;user-select:none}
-.mygo-win-btn{--app-region:no-drag;width:34px;height:24px;border:none;background:transparent;
+/* 窗口按钮单独一层，绝不做 drag 容器的子元素：--app-region 会继承，按钮跟着变 drag
+   的话，点击会被 mygo 当成拖窗户，click 根本到不了 onClick。 */
+.mygo-winctl{position:fixed;top:0;right:6px;height:30px;display:flex;align-items:center;gap:2px;
+  z-index:70;--app-region:no-drag}
+.mygo-win-btn{width:34px;height:24px;border:none;background:transparent;
   color:var(--dim);cursor:pointer;border-radius:4px;font-size:13px;line-height:1;padding:0}
 .mygo-win-btn:hover{background:var(--hover);color:var(--txt)}
 .mygo-win-btn.close:hover{background:#e04b3a;color:#fff}

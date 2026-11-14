@@ -61,6 +61,10 @@ func main() {
 		}
 		bootLog("窗口已建，page url: %q", url)
 
+		// 诊断：页面上的 × 有没有真的把关闭请求送到窗口。
+		win.OnClose(func(e *mygo.CloseEvent) { bootLog("窗口收到关闭请求") })
+		win.OnClosed(func() { bootLog("窗口已关闭") })
+
 		// 页面 <title> 是「千千静听 · Wails 桌面版」，会盖掉窗口标题、和
 		// Wails 版播放器撞名，这里拦下来保持自己的名字。
 		if p := win.Page(); p != nil {
