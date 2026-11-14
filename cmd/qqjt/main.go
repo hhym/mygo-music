@@ -10,7 +10,7 @@ import (
 
 func main() {
 	a := qianqian.NewApp()
-	mygo.Bind(a)
+	mygo.BindAs("App", qianqian.NewAPI(a))
 	mygo.App.WhenReady(func() {
 		win := mygo.NewWindow(mygo.WindowOptions{
 			Title:     "千千静听",

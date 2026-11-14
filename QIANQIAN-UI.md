@@ -49,10 +49,23 @@ window.mygo.call('App.X', ...args)
 - **迷你浮卡尺寸**：仍是 348×124，`SetMiniMode` 里切换尺寸与置顶。
 - **拖动**：仍走前端 `WinMoveBy(dx, dy)` → 窗口移动。
 
+## 绑定层为什么多一个 API
+
+MyGo 的绑定只接受这两种方法签名：单返回值，或者 `(值, error)`。
+千千静听原来的方法全是 `(值, 错误串)`，第二个是 `string`，直接 Bind 会在注册阶段
+报 `the second result must be an error`，整个服务绑不上、窗口里什么都点不动。
+
+所以 `qianqian/bind.go` 里多了一层 `API`：42 个方法逐个转签名，把错误串包成
+`errors.New`，参数与值原样转发。原 `app.go` 一行没动，仍然是千千静听那套逻辑。
+
+`cmd/qqjt/main.go` 里用 `mygo.BindAs("App", qianqian.NewAPI(a))`，服务名固定是
+`App`，所以前端 `window.go.main.App.X(...)` 照旧。
+
 ## 还没做的
 
 - 皮肤页面里的六款皮肤缩略图（截图 assets）需要重新打包进 `page.html`。
 - 原生 UI 入口（`main.go`）里还有若干 mygo-music 独有页面（评论、电台榜单等），
   没有对应的千千静听页面。
-- 多返回值：Wails 会把 `(data, err)` 打包成数组，MyGo 的绑定只取第一个返回值。
-  前端 `callResult` 已兼容单值，但错误信息会丢，需要真机跑一遍确认。
+- 迷你浮卡现在是「同一窗口缩到 348×124 + 置顶」，窗口仍带系统标题栏。
+  要像截图那样干净地浮在桌面上，需要真机调无边框/透明窗口，或者像上游
+  `ui_notch.go` 那样单开一个 `Frameless` 小窗，这一项留着等你真机反馈。
