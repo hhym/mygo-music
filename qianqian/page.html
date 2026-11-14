@@ -5,7 +5,7 @@
   try { window.localStorage.getItem('__qqjt_probe'); }
   catch (e) {
     var mem = Object.create(null);
-    var shim = {
+    var ls = {
       getItem: function(k){ return k in mem ? mem[k] : null; },
       setItem: function(k,v){ mem[k] = String(v); },
       removeItem: function(k){ delete mem[k]; },
@@ -13,7 +13,7 @@
       key: function(i){ return Object.keys(mem)[i] || null; },
       get length(){ return Object.keys(mem).length; }
     };
-    try { Object.defineProperty(window, 'localStorage', { configurable: true, value: shim }); } catch (e2) {}
+    try { Object.defineProperty(window, 'localStorage', { configurable: true, value: ls }); } catch (e2) {}
   }
   window.go = window.go || {};
   window.go.main = window.go.main || {};
@@ -24,7 +24,11 @@
         var args = Array.prototype.slice.call(arguments);
         try {
           if (!window.mygo) return Promise.resolve(null);
-          return Promise.resolve(window.mygo.call('App.' + String(k), args));
+          // mygo.call(method, ...args) 是按位置展开的，这里必须把参数摊平，
+          // 直接传数组会让 Go 收到一个 JSON 数组当第一个参数。
+          return Promise.resolve(
+            window.mygo.call.apply(window.mygo, ['App.' + String(k)].concat(args))
+          );
         } catch (e) { return Promise.resolve(null); }
       };
     }
