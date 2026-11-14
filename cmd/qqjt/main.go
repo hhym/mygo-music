@@ -37,7 +37,7 @@ func main() {
 		a.Start()
 		url := a.PageURL()
 		opts := mygo.WindowOptions{
-			Title:     "千千静听 · MyGo",
+			Title:     "葫芦音乐",
 			Width:     1190,
 			Height:    780,
 			MinWidth:  900,
