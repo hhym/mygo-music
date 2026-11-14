@@ -1,13 +1,49 @@
 package qianqian
 
-import "errors"
+import (
+	"encoding/json"
+	"errors"
+)
 
-// API 是给前端用的绑定层。千千静听原来的方法返回 (值, 错误串)，
-// MyGo 的绑定只收 (值, error) 或单值，所以这里统一包一层：
-// 错误串变成 error，前端 catch 到的仍是同一句中文提示。
+// API 是给前端用的绑定层。
+//
+// 两件事必须在这里做：
+//  1. 千千静听的方法返回 (值, 错误串)，MyGo 只认 (值, error)，错误串要包成 error；
+//  2. 前端经 Proxy 转发，参数偶尔会多裹一层数组，这里统一用 any 收再宽松还原，
+//     避免 invalid argument: cannot unmarshal ... 之类的小事故。
 type API struct{ *App }
 
 func NewAPI(a *App) API { return API{a} }
+
+// unwrap 剥掉多余的包裹：单元素数组取第一个，单键 map 取值。
+func unwrap(v any) any {
+	switch t := v.(type) {
+	case []any:
+		if len(t) == 1 {
+			return unwrap(t[0])
+		}
+	case map[string]any:
+		if len(t) == 1 {
+			for _, x := range t {
+				return unwrap(x)
+			}
+		}
+	}
+	return v
+}
+
+// as 用 JSON 中转把任意值还原成目标类型，失败给零值。
+func as[T any](v any) T {
+	var out T
+	b, err := json.Marshal(unwrap(v))
+	if err != nil {
+		return out
+	}
+	_ = json.Unmarshal(b, &out)
+	return out
+}
+
+func asStr(v any) string { return as[string](v) }
 
 func errOf(s string) error {
 	if s == "" {
@@ -16,37 +52,34 @@ func errOf(s string) error {
 	return errors.New(s)
 }
 
-// Quit 迷你卡右上角 ×：直接退出进程，不是把窗口还原。
-func (x API) Quit() { x.App.Quit() }
-
-func (x API) OpenExternal(url string) string {
-	return x.App.OpenExternal(url)
+func (x API) OpenExternal(url any) string {
+	return x.App.OpenExternal(asStr(url))
 }
 
-func (x API) SetMiniMode(on bool) string {
-	return x.App.SetMiniMode(on)
+func (x API) SetMiniMode(on any) string {
+	return x.App.SetMiniMode(as[bool](on))
 }
 
-func (x API) Search(query string, sources []string) SearchResult {
-	return x.App.Search(query, sources)
+func (x API) Search(query any, sources any) SearchResult {
+	return x.App.Search(asStr(query), as[[]string](sources))
 }
 
 func (x API) Charts() []Chart {
 	return x.App.Charts()
 }
 
-func (x API) ChartTracks(id string) ([]Track, error) {
-	v, e := x.App.ChartTracks(id)
+func (x API) ChartTracks(id any) ([]Track, error) {
+	v, e := x.App.ChartTracks(asStr(id))
 	return v, errOf(e)
 }
 
-func (x API) StreamURL(id string) (string, error) {
-	v, e := x.App.StreamURL(id)
+func (x API) StreamURL(id any) (string, error) {
+	v, e := x.App.StreamURL(asStr(id))
 	return v, errOf(e)
 }
 
-func (x API) Lyric(id string) ([]LyricLine, error) {
-	v, e := x.App.Lyric(id)
+func (x API) Lyric(id any) ([]LyricLine, error) {
+	v, e := x.App.Lyric(asStr(id))
 	return v, errOf(e)
 }
 
@@ -54,20 +87,20 @@ func (x API) Library() []Track {
 	return x.App.Library()
 }
 
-func (x API) ToggleLibrary(t Track) []Track {
-	return x.App.ToggleLibrary(t)
+func (x API) ToggleLibrary(t any) []Track {
+	return x.App.ToggleLibrary(as[Track](t))
 }
 
-func (x API) InLibrary(id string) bool {
-	return x.App.InLibrary(id)
+func (x API) InLibrary(id any) bool {
+	return x.App.InLibrary(asStr(id))
 }
 
-func (x API) HttpRequest(rawURL, method string, headers map[string]string, body string, manualRedirect bool) HttpResult {
-	return x.App.HttpRequest(rawURL, method, headers, body, manualRedirect)
+func (x API) HttpRequest(rawURL any, method any, headers any, body any, manualRedirect any) HttpResult {
+	return x.App.HttpRequest(asStr(rawURL), asStr(method), as[map[string]string](headers), asStr(body), as[bool](manualRedirect))
 }
 
-func (x API) PluginPlayURL(rawURL, referer string) (string, error) {
-	v, e := x.App.PluginPlayURL(rawURL, referer)
+func (x API) PluginPlayURL(rawURL any, referer any) (string, error) {
+	v, e := x.App.PluginPlayURL(asStr(rawURL), asStr(referer))
 	return v, errOf(e)
 }
 
@@ -80,12 +113,12 @@ func (x API) LocalDirs() []string {
 	return x.App.LocalDirs()
 }
 
-func (x API) ForgetLocalDir(dir string) []string {
-	return x.App.ForgetLocalDir(dir)
+func (x API) ForgetLocalDir(dir any) []string {
+	return x.App.ForgetLocalDir(asStr(dir))
 }
 
-func (x API) ScanLocalMusic(dir string) LocalScan {
-	return x.App.ScanLocalMusic(dir)
+func (x API) ScanLocalMusic(dir any) LocalScan {
+	return x.App.ScanLocalMusic(asStr(dir))
 }
 
 func (x API) Plugins() ([]Plugin, error) {
@@ -93,53 +126,53 @@ func (x API) Plugins() ([]Plugin, error) {
 	return v, errOf(e)
 }
 
-func (x API) InstallPluginText(code string) PickResult {
-	return x.App.InstallPluginText(code)
+func (x API) InstallPluginText(code any) PickResult {
+	return x.App.InstallPluginText(asStr(code))
 }
 
-func (x API) InstallPluginFile(path string) PickResult {
-	return x.App.InstallPluginFile(path)
+func (x API) InstallPluginFile(path any) PickResult {
+	return x.App.InstallPluginFile(asStr(path))
 }
 
-func (x API) InstallPluginURL(rawURL string) PickResult {
-	return x.App.InstallPluginURL(rawURL)
+func (x API) InstallPluginURL(rawURL any) PickResult {
+	return x.App.InstallPluginURL(asStr(rawURL))
 }
 
-func (x API) SetPluginEnabled(id string, on bool) ([]Plugin, error) {
-	v, e := x.App.SetPluginEnabled(id, on)
+func (x API) SetPluginEnabled(id any, on any) ([]Plugin, error) {
+	v, e := x.App.SetPluginEnabled(asStr(id), as[bool](on))
 	return v, errOf(e)
 }
 
-func (x API) RemovePlugin(id string) ([]Plugin, error) {
-	v, e := x.App.RemovePlugin(id)
+func (x API) RemovePlugin(id any) ([]Plugin, error) {
+	v, e := x.App.RemovePlugin(asStr(id))
 	return v, errOf(e)
 }
 
-func (x API) PluginSource(id string) (string, error) {
-	v, e := x.App.PluginSource(id)
+func (x API) PluginSource(id any) (string, error) {
+	v, e := x.App.PluginSource(asStr(id))
 	return v, errOf(e)
 }
 
-func (x API) PluginExists(id string) bool {
-	return x.App.PluginExists(id)
+func (x API) PluginExists(id any) bool {
+	return x.App.PluginExists(asStr(id))
 }
 
-func (x API) PluginDir(id string) string {
-	return x.App.PluginDir(id)
+func (x API) PluginDir(id any) string {
+	return x.App.PluginDir(asStr(id))
 }
 
-func (x API) PluginFile(id, rel string) (string, error) {
-	v, e := x.App.PluginFile(id, rel)
+func (x API) PluginFile(id any, rel any) (string, error) {
+	v, e := x.App.PluginFile(asStr(id), asStr(rel))
 	return v, errOf(e)
 }
 
-func (x API) PluginStorage(id string) (string, error) {
-	v, e := x.App.PluginStorage(id)
+func (x API) PluginStorage(id any) (string, error) {
+	v, e := x.App.PluginStorage(asStr(id))
 	return v, errOf(e)
 }
 
-func (x API) SavePluginStorage(id, data string) string {
-	return x.App.SavePluginStorage(id, data)
+func (x API) SavePluginStorage(id any, data any) string {
+	return x.App.SavePluginStorage(asStr(id), asStr(data))
 }
 
 func (x API) PickPluginZip() PickResult {
@@ -150,28 +183,28 @@ func (x API) PickPluginDir() PickResult {
 	return x.App.PickPluginDir()
 }
 
-func (x API) RunProcess(bin string, args []string, timeoutSec int) (ProcessResult, error) {
-	v, e := x.App.RunProcess(bin, args, timeoutSec)
+func (x API) RunProcess(bin any, args any, timeoutSec any) (ProcessResult, error) {
+	v, e := x.App.RunProcess(asStr(bin), as[[]string](args), as[int](timeoutSec))
 	return v, errOf(e)
 }
 
-func (x API) PluginSettings(id string) (map[string]string, error) {
-	v, e := x.App.PluginSettings(id)
+func (x API) PluginSettings(id any) (map[string]string, error) {
+	v, e := x.App.PluginSettings(asStr(id))
 	return v, errOf(e)
 }
 
-func (x API) SavePluginSetting(id, key, value string) (map[string]string, error) {
-	v, e := x.App.SavePluginSetting(id, key, value)
+func (x API) SavePluginSetting(id any, key any, value any) (map[string]string, error) {
+	v, e := x.App.SavePluginSetting(asStr(id), asStr(key), asStr(value))
 	return v, errOf(e)
 }
 
-func (x API) PodcastSearch(term string) ([]Show, error) {
-	v, e := x.App.PodcastSearch(term)
+func (x API) PodcastSearch(term any) ([]Show, error) {
+	v, e := x.App.PodcastSearch(asStr(term))
 	return v, errOf(e)
 }
 
-func (x API) PodcastEpisodes(feedURL string) ([]Track, error) {
-	v, e := x.App.PodcastEpisodes(feedURL)
+func (x API) PodcastEpisodes(feedURL any) ([]Track, error) {
+	v, e := x.App.PodcastEpisodes(asStr(feedURL))
 	return v, errOf(e)
 }
 
@@ -183,8 +216,8 @@ func (x API) GetSettings() Settings {
 	return x.App.GetSettings()
 }
 
-func (x API) SaveSettings(s Settings) (Settings, error) {
-	v, e := x.App.SaveSettings(s)
+func (x API) SaveSettings(s any) (Settings, error) {
+	v, e := x.App.SaveSettings(as[Settings](s))
 	return v, errOf(e)
 }
 
@@ -203,6 +236,9 @@ func (x API) ClearLibrary() ([]Track, error) {
 	return v, errOf(e)
 }
 
-func (x API) WinMoveBy(dx, dy int) string {
-	return x.App.WinMoveBy(dx, dy)
+func (x API) WinMoveBy(dx any, dy any) string {
+	return x.App.WinMoveBy(as[int](dx), as[int](dy))
 }
+
+// Quit 迷你卡右上角 ×：直接退出进程。
+func (x API) Quit() { x.App.Quit() }
