@@ -11931,6 +11931,19 @@ class Equalizer {
     this.out = null;
   }
 }
+const MYGO_HOST = typeof window.mygo !== "undefined";
+function markMygoHost() {
+  if (!MYGO_HOST)
+    return;
+  const go = () => document.body.classList.add("mygo-frameless");
+  if (document.body)
+    go();
+  else
+    document.addEventListener("DOMContentLoaded", go, {
+      once: true
+    });
+}
+markMygoHost();
 function applyDefaultLookOnce() {
   try {
     if (localStorage.getItem("qqjt-look-276"))
@@ -12085,6 +12098,9 @@ function App() {
   const audio = react.exports.useRef(null);
   const [npOpen, setNpOpen] = react.exports.useState(false);
   const [mini, setMini] = react.exports.useState(false);
+  react.exports.useEffect(() => {
+    document.body.classList.toggle("qq-mini", mini);
+  }, [mini]);
   const [volume, setVolumeState] = react.exports.useState(0.5);
   const [layout, setLayout] = react.exports.useState(() => localStorage.getItem("qqjt-layout") === "desk" ? "desk" : "skin");
   function switchLayout(l2) {
@@ -13460,7 +13476,35 @@ function App() {
   return /* @__PURE__ */ jsxs("div", {
     className: "app" + (layout === "desk" ? " desk-mode" : " skin") + (mini ? " mini-mode" : ""),
     "data-skin": skinTheme,
-    children: [layout === "desk" ? /* @__PURE__ */ jsxs("div", {
+    children: [MYGO_HOST && !mini && /* @__PURE__ */ jsxs("div", {
+      className: "mygo-dragbar",
+      children: [/* @__PURE__ */ jsx("span", {
+        className: "mygo-bar-title",
+        children: "\u5343\u5343\u9759\u542C"
+      }), /* @__PURE__ */ jsx("button", {
+        className: "mygo-win-btn",
+        title: "\u6700\u5C0F\u5316",
+        onClick: () => {
+          var _a2, _b2, _c2, _d2;
+          try {
+            (_d2 = (_c2 = (_b2 = (_a2 = window.mygo) == null ? void 0 : _a2.runtime) == null ? void 0 : _b2.window) == null ? void 0 : _c2.minimize) == null ? void 0 : _d2.call(_c2);
+          } catch {
+          }
+        },
+        children: "\u2014"
+      }), /* @__PURE__ */ jsx("button", {
+        className: "mygo-win-btn close",
+        title: "\u5173\u95ED",
+        onClick: () => {
+          var _a2, _b2, _c2, _d2;
+          try {
+            (_d2 = (_c2 = (_b2 = (_a2 = window.mygo) == null ? void 0 : _a2.runtime) == null ? void 0 : _b2.window) == null ? void 0 : _c2.close) == null ? void 0 : _d2.call(_c2);
+          } catch {
+          }
+        },
+        children: "\xD7"
+      })]
+    }), layout === "desk" ? /* @__PURE__ */ jsxs("div", {
       className: "desk",
       children: [/* @__PURE__ */ jsxs("aside", {
         className: "desk-nav",
@@ -16443,6 +16487,23 @@ html[data-theme='dark'] .plug-kind {
 /* 插件账号卡片的提示与报错 */
 .acct-hint{margin:8px 0 0;font-size:12px;color:var(--dim)}
 .acct-err{margin:8px 0 0;font-size:12px;color:#c0392b;line-height:1.6;word-break:break-word}
+
+/* ---------- MyGo 宿主：窗口无边框，页面自己画顶部拖动条 ---------- */
+/* mygo-music 那边窗口是 Frameless 的，没有系统标题栏，所以这里补一条 30px 的条：
+   空白处拖动窗口，右边是最小化/关闭。Wails 版没有 window.mygo，body 不会带这个类。 */
+body.mygo-frameless .app{box-sizing:border-box;padding-top:30px}
+body.mygo-frameless .app.mini-mode{padding-top:0;background:transparent}
+body.qq-mini{background:transparent}
+body.mygo-frameless:has(.app.mini-mode){background:transparent}
+
+.mygo-dragbar{position:fixed;left:0;right:0;top:0;height:30px;display:flex;align-items:center;gap:2px;
+  padding:0 6px 0 12px;background:var(--panel);border-bottom:1px solid var(--line);
+  color:var(--dim);font-size:12px;z-index:60;--app-region:drag}
+.mygo-bar-title{flex:1;line-height:30px;letter-spacing:.5px;user-select:none}
+.mygo-win-btn{--app-region:no-drag;width:34px;height:24px;border:none;background:transparent;
+  color:var(--dim);cursor:pointer;border-radius:4px;font-size:13px;line-height:1;padding:0}
+.mygo-win-btn:hover{background:var(--hover);color:var(--txt)}
+.mygo-win-btn.close:hover{background:#e04b3a;color:#fff}
 
 </style>
 </head>

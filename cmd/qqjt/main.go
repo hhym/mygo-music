@@ -42,7 +42,13 @@ func main() {
 			Height:    780,
 			MinWidth:  900,
 			MinHeight: 560,
-			Page:      mygo.PageOptions{DevTools: mygo.DevToolsEnabled},
+			// 无边框 + 透明：系统标题栏不要了，改由页面顶部的 mygo-dragbar 拖动、
+			// 自绘最小化/关闭。透明是为了迷你模式——窗口缩到 348×124 时页面背景
+			// 变透明，只剩那张带圆角的迷你卡露在外面，看起来就是贴在桌面上的浮卡。
+			Frameless:    true,
+			Transparent:  true,
+			CornerRadius: 12,
+			Page:         mygo.PageOptions{DevTools: mygo.DevToolsEnabled},
 		}
 		if url != "" {
 			opts.URL = url
