@@ -417,6 +417,7 @@ func Run() error {
 	})
 	mygo.App.OnBeforeQuit(func(*mygo.QuitEvent) {
 		a.quitting = true
+		closeHulu()
 		a.settings.Volume = a.volume
 		a.settings.save()
 		a.saveSession()

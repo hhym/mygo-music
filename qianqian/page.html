@@ -9926,6 +9926,8 @@ function MiniPlayer(p2) {
     const t2 = e.target;
     if (t2.closest("button"))
       return;
+    if (document.body.classList.contains("qq-owned"))
+      return;
     e.preventDefault();
     const onMove = (ev) => {
       drag.current.dx += ev.movementX;
@@ -11937,6 +11939,26 @@ class Equalizer {
   }
 }
 const MYGO_HOST = typeof window.mygo !== "undefined";
+const START_PARAMS = (() => {
+  try {
+    return new URLSearchParams(window.location.search);
+  } catch {
+    return new URLSearchParams();
+  }
+})();
+const OWNED_WIN = START_PARAMS.get("windowed") === "1";
+const START_MINI = START_PARAMS.get("mini") === "1";
+function markOwnedWin() {
+  if (!OWNED_WIN)
+    return;
+  const go = () => document.body.classList.add("qq-owned");
+  if (document.body)
+    go();
+  else
+    document.addEventListener("DOMContentLoaded", go, {
+      once: true
+    });
+}
 function markMygoHost() {
   if (!MYGO_HOST)
     return;
@@ -11949,14 +11971,21 @@ function markMygoHost() {
     });
 }
 function closeApp() {
-  var _a, _b, _c, _d, _e, _f, _g, _h;
+  var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l;
   const w2 = window;
+  if (OWNED_WIN) {
+    try {
+      (_d = (_c = (_b = (_a = w2.mygo) == null ? void 0 : _a.runtime) == null ? void 0 : _b.window) == null ? void 0 : _c.close) == null ? void 0 : _d.call(_c);
+    } catch {
+    }
+    return;
+  }
   try {
-    (_d = (_c = (_b = (_a = w2.go) == null ? void 0 : _a.main) == null ? void 0 : _b.App) == null ? void 0 : _c.Quit) == null ? void 0 : _d.call(_c);
+    (_h = (_g = (_f = (_e = w2.go) == null ? void 0 : _e.main) == null ? void 0 : _f.App) == null ? void 0 : _g.Quit) == null ? void 0 : _h.call(_g);
   } catch {
   }
   try {
-    (_h = (_g = (_f = (_e = w2.mygo) == null ? void 0 : _e.runtime) == null ? void 0 : _f.window) == null ? void 0 : _g.close) == null ? void 0 : _h.call(_g);
+    (_l = (_k = (_j = (_i = w2.mygo) == null ? void 0 : _i.runtime) == null ? void 0 : _j.window) == null ? void 0 : _k.close) == null ? void 0 : _l.call(_k);
   } catch {
   }
   window.setTimeout(() => {
@@ -11968,18 +11997,26 @@ function closeApp() {
   }, 350);
 }
 function minimizeApp() {
-  var _a, _b, _c, _d, _e, _f, _g, _h;
+  var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l;
   const w2 = window;
+  if (OWNED_WIN) {
+    try {
+      (_d = (_c = (_b = (_a = w2.mygo) == null ? void 0 : _a.runtime) == null ? void 0 : _b.window) == null ? void 0 : _c.minimize) == null ? void 0 : _d.call(_c);
+    } catch {
+    }
+    return;
+  }
   try {
-    (_d = (_c = (_b = (_a = w2.go) == null ? void 0 : _a.main) == null ? void 0 : _b.App) == null ? void 0 : _c.WinMinimize) == null ? void 0 : _d.call(_c);
+    (_h = (_g = (_f = (_e = w2.go) == null ? void 0 : _e.main) == null ? void 0 : _f.App) == null ? void 0 : _g.WinMinimize) == null ? void 0 : _h.call(_g);
   } catch {
   }
   try {
-    (_h = (_g = (_f = (_e = w2.mygo) == null ? void 0 : _e.runtime) == null ? void 0 : _f.window) == null ? void 0 : _g.minimize) == null ? void 0 : _h.call(_g);
+    (_l = (_k = (_j = (_i = w2.mygo) == null ? void 0 : _i.runtime) == null ? void 0 : _j.window) == null ? void 0 : _k.minimize) == null ? void 0 : _l.call(_k);
   } catch {
   }
 }
 markMygoHost();
+markOwnedWin();
 function applyDefaultLookOnce() {
   try {
     if (localStorage.getItem("qqjt-look-276"))
@@ -12133,7 +12170,7 @@ function App() {
   const [busy, setBusy] = react.exports.useState(false);
   const audio = react.exports.useRef(null);
   const [npOpen, setNpOpen] = react.exports.useState(false);
-  const [mini, setMini] = react.exports.useState(false);
+  const [mini, setMini] = react.exports.useState(START_MINI);
   react.exports.useEffect(() => {
     document.body.classList.toggle("qq-mini", mini);
   }, [mini]);
@@ -16543,6 +16580,11 @@ body.mygo-frameless:has(.app.mini-mode){background:transparent}
   color:var(--dim);cursor:pointer;border-radius:4px;font-size:13px;line-height:1;padding:0}
 .mygo-win-btn:hover{background:var(--hover);color:var(--txt)}
 .mygo-win-btn.close:hover{background:#e04b3a;color:#fff}
+
+/* 葫芦窗口（mygo-music 加装的皮肤/迷你窗口）：迷你卡的拖动交给 mygo 的
+   --app-region，窗口自己就是 348×124，不需要前端再算位移。 */
+body.qq-owned .mini-player{ --app-region: drag }
+body.qq-owned .mini-card{ cursor: default }
 
 </style>
 </head>

@@ -77,6 +77,13 @@ func (a *app) setMenu() {
 			mygo.Separator(),
 			{Label: name, Accelerator: "CmdOrCtrl+0", Click: run(a.showMain)},
 			{Role: mygo.RoleFront, Label: T("Bring All to Front")},
+			mygo.Separator(),
+			// 葫芦界面是加装进这个原生的播放器里的：原生窗口照旧，这两项各开
+			// 它自己的窗口，皮肤和迷你卡片都跑内置的 WebView 页面。
+			{Label: "葫芦音乐 · 皮肤界面", Accelerator: "CmdOrCtrl+Shift+S",
+				Click: func(*mygo.MenuItem, *mygo.Window) { a.openHuluSkin() }},
+			{Label: "葫芦音乐 · 迷你卡片", Accelerator: "CmdOrCtrl+Shift+M",
+				Click: func(*mygo.MenuItem, *mygo.Window) { a.openHuluMini() }},
 		}},
 	}))
 }

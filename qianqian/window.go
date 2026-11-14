@@ -13,6 +13,11 @@ const (
 	minW, minH = 900, 560
 )
 
+// MiniWidth, MiniHeight 是迷你卡片的窗口尺寸。宿主（比如 mygo-music 的原生
+// 界面）要另外开一个迷你窗口时照这个开，和前端 .mini-player 的尺寸对上。
+func MiniWidth() int  { return miniW }
+func MiniHeight() int { return miniH }
+
 func (a *App) miniOn() string {
 	if a.win == nil {
 		return "窗口还没准备好"
