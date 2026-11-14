@@ -1,5 +1,20 @@
 <!DOCTYPE html><script>
 (function(){
+  // about:blank / 无 origin 时 localStorage 会抛 SecurityError，前端 useState
+  // 里一读就白屏。这里探一下，不可用就换成内存版，至少界面能起来。
+  try { window.localStorage.getItem('__qqjt_probe'); }
+  catch (e) {
+    var mem = Object.create(null);
+    var shim = {
+      getItem: function(k){ return k in mem ? mem[k] : null; },
+      setItem: function(k,v){ mem[k] = String(v); },
+      removeItem: function(k){ delete mem[k]; },
+      clear: function(){ mem = Object.create(null); },
+      key: function(i){ return Object.keys(mem)[i] || null; },
+      get length(){ return Object.keys(mem).length; }
+    };
+    try { Object.defineProperty(window, 'localStorage', { configurable: true, value: shim }); } catch (e2) {}
+  }
   window.go = window.go || {};
   window.go.main = window.go.main || {};
   window.go.main.App = new Proxy({}, {
@@ -7,8 +22,10 @@
       if (k === 'then' || k === 'toJSON') return undefined;
       return function(){
         var args = Array.prototype.slice.call(arguments);
-        try { return Promise.resolve(window.mygo.call('App.' + String(k), args)); }
-        catch (e) { return Promise.resolve(null); }
+        try {
+          if (!window.mygo) return Promise.resolve(null);
+          return Promise.resolve(window.mygo.call('App.' + String(k), args));
+        } catch (e) { return Promise.resolve(null); }
       };
     }
   });

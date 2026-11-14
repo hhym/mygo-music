@@ -22,7 +22,11 @@ func main() {
 		a.AttachWindow(win)
 		a.Start()
 		if p := win.Page(); p != nil {
-			p.LoadHTML(qianqian.Page(), "")
+			if u := a.PageURL(); u != "" {
+				p.LoadURL(u)
+			} else {
+				p.LoadHTML(qianqian.Page(), "")
+			}
 		}
 	})
 	if err := mygo.App.Run(); err != nil {

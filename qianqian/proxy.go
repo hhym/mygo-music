@@ -22,6 +22,7 @@ import (
 
 var proxyOnce sync.Once
 var proxyBase string
+var proxyRoot string
 
 func (a *App) ensureProxy() string {
 	proxyOnce.Do(func() {
@@ -32,9 +33,21 @@ func (a *App) ensureProxy() string {
 		port := ln.Addr().(*net.TCPAddr).Port
 		mux := http.NewServeMux()
 		mux.HandleFunc("/a", handleAudioProxy)
+		// 界面也从这个真实 origin 提供。about:blank（NavigateToString）
+		// 的 localStorage 会被 WebView2 拒绝，React 一读就白屏。
+		mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+			if r.URL.Path != "/" {
+				http.NotFound(w, r)
+				return
+			}
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			w.Header().Set("Cache-Control", "no-store")
+			_, _ = w.Write([]byte(Page()))
+		})
 		srv := &http.Server{Handler: mux}
 		go srv.Serve(ln)
-		proxyBase = fmt.Sprintf("http://127.0.0.1:%d/a", port)
+		proxyRoot = fmt.Sprintf("http://127.0.0.1:%d", port)
+		proxyBase = proxyRoot + "/a"
 	})
 	return proxyBase
 }

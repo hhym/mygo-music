@@ -49,6 +49,17 @@ window.mygo.call('App.X', ...args)
 - **迷你浮卡尺寸**：仍是 348×124，`SetMiniMode` 里切换尺寸与置顶。
 - **拖动**：仍走前端 `WinMoveBy(dx, dy)` → 窗口移动。
 
+## 为什么界面是从 127.0.0.1 加载的
+
+MyGo 的 `LoadHTML` 走 WebView2 的 `NavigateToString`，页面 origin 是 `about:blank`，
+那里读 `localStorage` 会抛 `SecurityError`，千千静听的前端在 `useState` 里就读皮肤/
+主题，一读就白屏。
+
+所以界面改由程序自带的本地代理服务提供：`ensureProxy` 里顺手挂了 `/` 路由返回
+`page.html`，窗口 `LoadURL("http://127.0.0.1:<port>/")`。真实 origin 下
+localStorage 正常，音频代理也变成同源。万一哪天又落到 `about:blank`，
+页面顶部的 shim 里还有一层 localStorage 内存兜底，至少不会白屏。
+
 ## 绑定层为什么多一个 API
 
 MyGo 的绑定只接受这两种方法签名：单返回值，或者 `(值, error)`。
