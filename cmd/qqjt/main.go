@@ -55,6 +55,10 @@ func main() {
 		}
 		win := mygo.NewWindow(opts)
 		a.AttachWindow(win)
+		// 窗口/任务栏图标：橘红圆底 + 福禄葫芦，透明圆边。
+		if err := win.SetIcon(qianqian.IconPNG()); err != nil {
+			bootLog("设置图标失败: %v", err)
+		}
 		bootLog("窗口已建，page url: %q", url)
 
 		// 页面 <title> 是「千千静听 · Wails 桌面版」，会盖掉窗口标题、和
