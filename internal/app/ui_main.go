@@ -13,12 +13,8 @@ import (
 const sidebarWidth = 232
 
 func (a *app) view(c *ui.Context) {
-	t := *c.Theme()
-	a.pal = paletteFor(&t)
-	p := a.pal
-	useAccent(&t, p)
-	t.Selection = p.accent.Alpha(0.3)
-	c.SetTheme(&t)
+	p := applyTheme(c, a.settings.Appearance)
+	a.pal = p
 
 	a.shortcuts(c)
 

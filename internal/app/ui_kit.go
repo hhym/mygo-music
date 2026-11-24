@@ -23,6 +23,12 @@ type palette struct {
 	accent    ui.Color
 	onAccent  ui.Color
 	cardShade ui.Color
+	// surface, surfaceHover and surfacePressed fill controls, and border
+	// outlines them, as the theme's own colors do.
+	surface        ui.Color
+	surfaceHover   ui.Color
+	surfacePressed ui.Color
+	border         ui.Color
 }
 
 // useAccent makes the app's accent the theme's, with its hover and press: left
@@ -37,23 +43,36 @@ func useAccent(t *ui.Theme, p palette) {
 	}
 }
 
+// paletteFor is the app's palette for the theme of t: the light one, or the dark.
 func paletteFor(t *ui.Theme) palette {
 	if t.Dark {
-		return palette{
-			dark:      true,
-			bg:        ui.Hex("#141416"),
-			sidebar:   ui.Hex("#1c1c1f"),
-			text:      ui.Hex("#f5f5f7"),
-			muted:     ui.RGBA(235, 235, 245, 0.56),
-			faint:     ui.RGBA(235, 235, 245, 0.3),
-			hairline:  ui.RGBA(255, 255, 255, 0.07),
-			hover:     ui.RGBA(255, 255, 255, 0.06),
-			press:     ui.RGBA(255, 255, 255, 0.1),
-			accent:    ui.Oklch(0.66, 0.2, 22),
-			onAccent:  ui.Hex("#ffffff"),
-			cardShade: ui.RGBA(0, 0, 0, 0.45),
-		}
+		return darkPalette()
 	}
+	return lightPalette()
+}
+
+func darkPalette() palette {
+	return palette{
+		dark:      true,
+		bg:        ui.Hex("#141416"),
+		sidebar:   ui.Hex("#1c1c1f"),
+		text:      ui.Hex("#f5f5f7"),
+		muted:     ui.RGBA(235, 235, 245, 0.56),
+		faint:     ui.RGBA(235, 235, 245, 0.3),
+		hairline:  ui.RGBA(255, 255, 255, 0.07),
+		hover:     ui.RGBA(255, 255, 255, 0.06),
+		press:     ui.RGBA(255, 255, 255, 0.1),
+		accent:    ui.Oklch(0.66, 0.2, 22),
+		onAccent:  ui.Hex("#ffffff"),
+		cardShade: ui.RGBA(0, 0, 0, 0.45),
+		surface:        ui.Hex("#1f1f22"),
+		surfaceHover:   ui.Hex("#2a2a2e"),
+		surfacePressed: ui.Hex("#34343a"),
+		border:         ui.Hex("#3a3a40"),
+	}
+}
+
+func lightPalette() palette {
 	return palette{
 		bg:        ui.Hex("#ffffff"),
 		sidebar:   ui.Hex("#f4f4f6"),
@@ -66,6 +85,10 @@ func paletteFor(t *ui.Theme) palette {
 		accent:    ui.Oklch(0.6, 0.21, 24),
 		onAccent:  ui.Hex("#ffffff"),
 		cardShade: ui.RGBA(0, 0, 0, 0.16),
+		surface:        ui.Hex("#f4f4f6"),
+		surfaceHover:   ui.Hex("#e9e9ec"),
+		surfacePressed: ui.Hex("#dddde1"),
+		border:         ui.Hex("#d9d9de"),
 	}
 }
 

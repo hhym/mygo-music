@@ -382,4 +382,11 @@ var zhCN = map[string]string{
 	"an hour ago":                                                   "1 小时前",
 	"just now":                                                      "刚刚",
 	"yesterday":                                                     "昨天",
+	"✻ Light":                                                       "✻ 浅色",
+	"◐ Dark":                                                        "◐ 深色",
+	"✿ Eye Care":                                                    "✿ 护眼绿",
+	"☆ Amber":                                                       "☆ 橘黄",
+	"❋ Deep Teal":                                                   "❋ 深青",
+	"☾ Black Gold":                                                  "☾ 黑金",
+	"The colors of the windows, light or dark, or one of MyGo's own palettes": "窗口配色：浅色、深色，或 MyGo 自带的几套主题",
 }

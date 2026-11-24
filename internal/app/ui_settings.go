@@ -146,10 +146,7 @@ func settingsMatch(query string, texts ...string) bool {
 }
 
 func (a *app) settingsView(c *ui.Context) {
-	t := *c.Theme()
-	p := paletteFor(&t)
-	useAccent(&t, p)
-	c.SetTheme(&t)
+	p := applyTheme(c, a.settings.Appearance)
 	c.Root().Background(p.bg)
 	c.OnShortcut(ui.Cmd, ui.KeyW, func() { a.settingsWin.Close() })
 	c.OnShortcut(ui.Cmd, ui.KeyF, func() { a.settingsSearchBox.Focus(c) })
@@ -342,16 +339,17 @@ func (a *app) settingsSections(c *ui.Context, p palette) []settingsSection {
 				a.setLanguage(code)
 			}
 		})
-		row(T("Appearance"), "", func() {
-			modes := []string{"system", "light", "dark"}
-			i := 0
-			for k, m := range modes {
-				if m == s.Appearance {
-					i = k
+		row(T("Appearance"), T("The colors of the windows, light or dark, or one of MyGo's own palettes"), func() {
+			labels := make([]string, len(themeChoices))
+			at := 0
+			for i, tc := range themeChoices {
+				labels[i] = tc.label
+				if tc.id == s.Appearance {
+					at = i
 				}
 			}
-			if segmented(c.Key("appearance"), &i, T("System"), T("Light"), T("Dark")) {
-				s.Appearance = modes[i]
+			if i, ok := choice(c, "appearance", T("Appearance"), labels, at); ok {
+				s.Appearance = themeChoices[i].id
 				a.changed()
 			}
 		})

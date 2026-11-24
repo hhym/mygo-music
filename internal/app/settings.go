@@ -44,7 +44,8 @@ type settings struct {
 	// Quality is what's asked of sources: standard, high or lossless. A source
 	// may ignore it.
 	Quality string `json:"quality"`
-	// Appearance is light, dark, or system to follow the system.
+	// Appearance is the theme of the windows: system to follow the system, or
+	// one of themeChoices: light, dark, green, amber, teal or gold.
 	Appearance string `json:"appearance"`
 	// GrowFromCover opens Now Playing out of the player bar's cover, and
 	// closes it back into it: an experiment the listener turns on. Off, it
@@ -133,13 +134,14 @@ func (s settings) save() error {
 
 // applyAppearance makes the windows light, dark, or follow the system. Only
 // a new one: it repaints every window, waiting for the main thread, and any
-// setting changed applies it.
+// setting changed applies it. The app's own palettes are light or dark under
+// the window's chrome as their colors are, and the views paint them.
 func (s settings) applyAppearance() {
 	src := mygo.ThemeSystem
-	switch s.Appearance {
-	case "light":
+	switch themeChoiceOf(s.Appearance).id {
+	case "light", "green", "amber":
 		src = mygo.ThemeLight
-	case "dark":
+	case "dark", "teal", "gold":
 		src = mygo.ThemeDark
 	}
 	if src != mygo.Theme.Source() {
