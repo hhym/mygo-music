@@ -5,6 +5,8 @@ import (
 	"io"
 
 	"github.com/jfreymuth/oggvorbis"
+
+	"mygo-music/internal/ffmpeg"
 )
 
 // Tags don't say how long a song is, and decoding it all to find out would make
@@ -201,4 +203,14 @@ func oggDuration(r io.ReaderAt, size int64) (ms int64) {
 		return 0
 	}
 	return d.Length() * 1000 / int64(d.SampleRate())
+}
+
+// ffmpegDuration is how long a file the app reads only through FFmpeg plays,
+// by FFmpeg itself, or 0 when it can't say.
+func ffmpegDuration(path string) int64 {
+	info, err := ffmpeg.Probe(path)
+	if err != nil {
+		return 0
+	}
+	return info.Duration.Milliseconds()
 }

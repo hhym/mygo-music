@@ -10,6 +10,7 @@ import (
 	"github.com/egoist/mygo"
 	"github.com/egoist/mygo/audio"
 
+	"mygo-music/internal/ffmpeg"
 	"mygo-music/internal/i18n"
 	"mygo-music/internal/lyrics"
 	"mygo-music/internal/music"
@@ -807,6 +808,8 @@ func errorText(err error) string {
 		return i18n.T("This song isn't available")
 	case errors.Is(err, music.ErrSignIn):
 		return i18n.T("Sign in to play this song")
+	case errors.Is(err, ffmpeg.ErrMissing):
+		return i18n.T("This format needs FFmpeg on this computer: put it beside the app, or set MYGO_FFMPEG")
 	case errors.Is(err, music.ErrSetup):
 		if reason := music.Reason(err); reason != "" {
 			return reason

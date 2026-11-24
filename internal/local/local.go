@@ -1,5 +1,7 @@
 // Package local is the built-in source of music files on disk: the folders the
-// listener chose, scanned for .mp3, .flac, .ogg, .wav, .m4a and .aac. What it
+// listener chose, scanned for .mp3, .flac, .ogg, .wav, .m4a and .aac, and the
+// formats FFmpeg plays when it is there: .ape, .wma, .aiff, .dsf and the rest.
+// What it
 // lists is held in memory and swapped whole as a scan goes on, so asking never
 // waits for one. What it keeps is in its data directory: library.json is the
 // listener's own (folders, likes, playlists, what was played), index.json only
@@ -584,7 +586,7 @@ func (s *Source) Stream(id, quality string) (*music.Stream, error) {
 		Peak:    it.Peak,
 	}
 	switch st.Type {
-	case "flac", "wav":
+	case "flac", "wav", "ape", "wv", "tta", "aiff", "aif", "dsf", "dff":
 		st.Quality = "lossless"
 	case "m4a":
 		if t, ok := m4aTrack(f, info.Size()); ok && lossless(t) {

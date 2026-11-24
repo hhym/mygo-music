@@ -11,6 +11,7 @@ import (
 	"github.com/egoist/mygo/plugins/glass"
 	"github.com/egoist/mygo/ui"
 
+	"mygo-music/internal/ffmpeg"
 	"mygo-music/internal/i18n"
 	"mygo-music/internal/local"
 	"mygo-music/internal/music"
@@ -440,6 +441,20 @@ func (a *app) settingsSections(c *ui.Context, p palette) []settingsSection {
 				a.pl.SetVolume(a.volume)
 				a.changed()
 			}
+		})
+		// What the app's own decoders don't open, FFmpeg does when it is
+		// there: the row says where it was found, or where to put it.
+		ffmpegPath := ffmpeg.Path()
+		desc := T("Decodes APE, WMA, AIFF, DSD and other formats the app can't open on its own")
+		if ffmpegPath == "" {
+			desc = T("Not found: put ffmpeg beside the app, or set MYGO_FFMPEG, to play APE, WMA, AIFF and DSD files")
+		}
+		row(T("FFmpeg"), desc, func() {
+			status := ffmpegPath
+			if status == "" {
+				status = T("Not found")
+			}
+			ui.Text(c, status).FontSize(12).TextColor(p.muted).SingleLine().MaxWidth(320)
 		})
 	})
 

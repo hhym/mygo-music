@@ -4,7 +4,7 @@ A native desktop music player written in Go with [MyGo](https://github.com/egois
 
 ## Features
 
-- Local files (MP3, FLAC, Ogg Vorbis, WAV, and ALAC, FLAC or AAC in .m4a and .aac) with tags, covers and `.lrc` lyrics
+- Local files (MP3, FLAC, Ogg Vorbis, WAV, and ALAC, FLAC or AAC in .m4a and .aac) with tags, covers and `.lrc` lyrics, and APE, WMA, AIFF, WavPack, TTA, Ogg Opus, DSD and the rest through FFmpeg when it is installed
 - Playlists, liked songs, search, albums and artists
 - Now Playing with lyric stage styles, cover wall, queue, shuffle and repeat
 - Notch player on macOS, tray, media keys
@@ -13,6 +13,18 @@ A native desktop music player written in Go with [MyGo](https://github.com/egois
 - Podcast captions, written down on the device as episodes play
 - English and Simplified Chinese
 - Plugins can add accounts, catalogs, podcasts, stations, comments and pages of their own
+
+## FFmpeg
+
+APE, WMA, AIFF, WavPack, TTA, AMR, Ogg Opus, DSD and Matroska audio are decoded by [FFmpeg](https://ffmpeg.org), which the app doesn't ship: it plays what its own decoders don't by running one it finds. A seek starts FFmpeg again at the file's offset, and the visualizers are fed from what it decodes, as from any other song.
+
+It is looked for, in this order:
+
+1. `MYGO_FFMPEG`, if set to a path or a name to look up
+2. beside the app, in its `bin/` or, for a macOS bundle, its `Contents/Resources` or `Contents/Frameworks`
+3. the `PATH`
+
+`ffprobe`, beside the FFmpeg found, is used to read how long a file plays while a folder is scanned; without it FFmpeg itself is asked. Settings > Playback > FFmpeg says which one the app found, or where to put it. Nothing else needs installing: without FFmpeg, the formats above are listed but say what they need when played.
 
 ## Build
 
@@ -100,7 +112,7 @@ Export a function for each thing the plugin does. Each takes one object of param
 | `likeComment` | `{trackId, commentId, on}` | |
 | `postComment` | `{trackId, text}` | `Comment` |
 | `lyrics` | `{id}` | `{lrc, translation}`, or `{lines}` with timed `words` |
-| `stream` | `{id, quality}` | `{url, type, headers, size, gain, peak}`, where `type` is `mp3`, `flac`, `ogg`, `wav`, `m4a` (ALAC, FLAC or AAC-LC, whole or in fragments as a DASH stream serves it) or `aac` (AAC-LC in ADTS) |
+| `stream` | `{id, quality}` | `{url, type, headers, size, gain, peak}`, where `type` is `mp3`, `flac`, `ogg`, `wav`, `m4a` (ALAC, FLAC or AAC-LC, whole or in fragments as a DASH stream serves it), `aac` (AAC-LC in ADTS), or a format FFmpeg plays when it is installed, such as `ape`, `wma` or `dsf` |
 | `remotePlay` | `{ids, start, position}` | |
 | `remotePause`, `remoteResume` | | |
 | `remoteSeek` | `{position}` | |

@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"io"
 	"math"
 	"math/cmplx"
@@ -16,6 +17,7 @@ import (
 	"github.com/egoist/mygo/audio"
 	gomp3 "github.com/hajimehoshi/go-mp3"
 
+	"mygo-music/internal/ffmpeg"
 	"mygo-music/internal/music"
 )
 
@@ -302,23 +304,29 @@ type downloadReader struct {
 }
 
 func (r *downloadReader) Read(p []byte) (int, error) {
-	d := r.d
+	n, err := r.d.readWait(p, r.pos)
+	r.pos += int64(n)
+	return n, err
+}
+
+// readWait reads into p what is in from off, waiting for what isn't yet, until
+// the download ends, as a reader of it goes on.
+func (d *download) readWait(p []byte, off int64) (int, error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
-	for d.n <= r.pos && !d.done {
+	for d.n <= off && !d.done {
 		d.cond.Wait()
 	}
-	if d.n <= r.pos {
+	if d.n <= off {
 		if d.err != nil {
 			return 0, d.err
 		}
 		return 0, io.EOF
 	}
-	n, err := d.readAt(p, r.pos)
+	n, err := d.readAt(p, off)
 	if n == 0 {
 		return 0, cmp.Or(err, io.ErrUnexpectedEOF)
 	}
-	r.pos += int64(n)
 	return n, nil
 }
 
@@ -331,10 +339,49 @@ type stream interface {
 	source() (*download, *spectrum)
 }
 
-// openStream opens the song dl fetches, MP3, FLAC, Ogg Vorbis, WAV, AAC, or
-// ALAC or AAC in an MP4, as its first bytes say. An MP3 says nothing of its
+// openStream opens the song dl fetches by what its first bytes say: an MP3,
+// FLAC, Ogg Vorbis, WAV, AAC, or ALAC or AAC in an MP4. What the app's own
+// decoders can't, as APE, WMA or DSD, FFmpeg decodes when it is there, beside
+// the app, on the PATH or where MYGO_FFMPEG says. An MP3 says nothing of its
 // length, nor does AAC still coming in: durationMs is it.
 func openStream(dl *download, durationMs int64) (stream, error) {
+	s, err := openBuiltin(dl, durationMs)
+	if err == nil {
+		return s, nil
+	}
+	if !ffmpeg.Available() {
+		if errors.Is(err, errOtherFormat) {
+			// A format no decoder of the app's reads: FFmpeg would, if it
+			// were here.
+			return nil, fmt.Errorf("%w: %v", ffmpeg.ErrMissing, err)
+		}
+		return nil, err
+	}
+	// The download failed, and FFmpeg would only say so again.
+	dl.mu.Lock()
+	failed := dl.err != nil
+	dl.mu.Unlock()
+	if failed {
+		return nil, err
+	}
+	ff, ferr := openFFmpegStream(dl, durationMs)
+	if ferr == nil {
+		return ff, nil
+	}
+	if errors.Is(ferr, ffmpeg.ErrMissing) {
+		return nil, err
+	}
+	// FFmpeg says what it made of it, which a listener can read.
+	return nil, ferr
+}
+
+// errOtherFormat says the song isn't any format the app's decoders read: one
+// FFmpeg may.
+var errOtherFormat = errors.New("player: another format")
+
+// openBuiltin opens the song with one of the app's own decoders, by what its
+// first bytes say.
+func openBuiltin(dl *download, durationMs int64) (stream, error) {
 	dl.waitFor(12)
 	if head := dl.peek(0, 12); len(head) == 12 {
 		switch {
@@ -357,7 +404,20 @@ func openStream(dl *download, durationMs int64) (stream, error) {
 			return openADTSStream(dl, off, durationMs)
 		}
 	}
-	return openMP3Stream(dl, durationMs)
+	s, err := openMP3Stream(dl, durationMs)
+	if err != nil && !startsMP3(dl) {
+		// Nothing about it says MP3: it is a format the app leaves to FFmpeg.
+		return nil, fmt.Errorf("%w: %v", errOtherFormat, err)
+	}
+	return s, err
+}
+
+// startsMP3 says whether the song begins with an MP3 frame, after any ID3 tag.
+func startsMP3(dl *download) bool {
+	off := id3Size(dl)
+	dl.waitFor(off + 4)
+	b := dl.peek(off, 4)
+	return len(b) >= 4 && frameSize(b) > 0
 }
 
 // openShared opens a second stream of what dl fetches, for decoding apart
@@ -382,6 +442,8 @@ func openShared(dl *download, durationMs int64) (stream, error) {
 	case *decodedStream:
 		s.spec, s.drop = nil, dl.release
 	case *adtsStream:
+		s.spec, s.drop = nil, dl.release
+	case *ffmpegStream:
 		s.spec, s.drop = nil, dl.release
 	}
 	return s, nil

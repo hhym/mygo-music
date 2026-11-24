@@ -6,12 +6,14 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
 	"time"
 
+	"mygo-music/internal/ffmpeg"
 	"mygo-music/internal/music"
 )
 
@@ -523,6 +525,40 @@ func TestRescanReusesIndex(t *testing.T) {
 	songNamed(t, again, "New")
 }
 
+// A WMA, which the app plays through FFmpeg, is scanned with the length FFmpeg
+// says of it.
+func TestScanWMA(t *testing.T) {
+	if !ffmpeg.Available() {
+		t.Skip("ffmpeg is not installed")
+	}
+	dir := t.TempDir()
+	wma := filepath.Join(dir, "tone.wma")
+	cmd := exec.Command(ffmpeg.Path(), "-hide_banner", "-loglevel", "error", "-y",
+		"-i", filepath.Join("..", "player", "testdata", "seek.flac"),
+		"-c:a", "wmav2", "-b:a", "128k", wma)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		t.Skipf("ffmpeg can't encode a WMA here: %v: %s", err, out)
+	}
+	s := scanned(t, dir)
+	got := songs(t, s)
+	if len(got) != 1 {
+		t.Fatalf("found %d songs", len(got))
+	}
+	if got[0].Name != "tone" {
+		t.Errorf("title %q", got[0].Name)
+	}
+	if d := got[0].Duration; d < 4500 || d > 5500 {
+		t.Errorf("length %d ms", d)
+	}
+	st, err := s.Stream(got[0].ID, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if st.Type != "wma" {
+		t.Errorf("type %q", st.Type)
+	}
+}
+
 // Only music outside hidden folders counts, whatever the case of its extension.
 func TestWalkFinds(t *testing.T) {
 	dir := t.TempDir()
@@ -531,7 +567,7 @@ func TestWalkFinds(t *testing.T) {
 	write(t, filepath.Join(dir, "lower.flac"), fixture(t, "seek.flac"))
 	write(t, filepath.Join(dir, ".hidden", "no.mp3"), audio)
 	write(t, filepath.Join(dir, "._lower.mp3"), audio)
-	write(t, filepath.Join(dir, "no.wma"), audio)
+	write(t, filepath.Join(dir, "no.mid"), audio) // not a format the app plays
 	write(t, filepath.Join(dir, "empty.mp3"), nil)
 	s := scanned(t, dir)
 	got := names(songs(t, s))

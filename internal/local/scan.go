@@ -243,7 +243,10 @@ func walk(ctx context.Context, folders []string) []found {
 				return nil
 			}
 			switch strings.ToLower(filepath.Ext(name)) {
-			case ".mp3", ".flac", ".ogg", ".wav", ".m4a", ".aac":
+			case ".mp3", ".flac", ".ogg", ".wav", ".m4a", ".m4b", ".aac",
+				// What the app plays through FFmpeg when it is there.
+				".ape", ".wv", ".tta", ".wma", ".aiff", ".aif", ".opus",
+				".dsf", ".dff", ".amr", ".mka":
 			default:
 				return nil
 			}
@@ -360,6 +363,10 @@ func (s *Source) readFile(file found) (entry, bool) {
 		e.Duration = track.Duration.Milliseconds()
 	case "aac":
 		e.Duration = adtsDuration(f, file.size)
+	case "ape", "wv", "tta", "wma", "aiff", "aif", "opus", "dsf", "dff", "amr", "mka":
+		// What the app reads only through FFmpeg, which says how long it
+		// plays.
+		e.Duration = ffmpegDuration(file.path)
 	default:
 		e.Duration = mp3Duration(f, file.size)
 	}
@@ -618,7 +625,12 @@ func fileType(f io.ReaderAt, path string) string {
 		return "mp3"
 	}
 	switch ext := strings.ToLower(filepath.Ext(path)); ext {
-	case ".flac", ".ogg", ".wav", ".m4a", ".aac":
+	case ".flac", ".ogg", ".wav", ".m4a", ".m4b", ".aac",
+		".ape", ".wv", ".tta", ".wma", ".aiff", ".aif", ".opus",
+		".dsf", ".dff", ".amr", ".mka":
+		if ext == ".m4b" {
+			return "m4a" // the same MP4, named for an audiobook
+		}
 		return ext[1:]
 	}
 	return "mp3"
