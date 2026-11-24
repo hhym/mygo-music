@@ -673,23 +673,37 @@ func (a *app) sourceSwitcher(c *ui.Context) {
 		ui.Icon(c, iconUpDown).Size(11, 11).TextColor(p.faint)
 	})
 	pop := popoverColors(p.dark)
+	// Enough sources and the list runs off the window: it scrolls inside a box
+	// as tall as what the window leaves below the trigger, on a scrollbar.
+	_, win := c.Size()
+	listHeight := win - 2*height - 24
+	// Whole rows, so the box doesn't cut one in half.
+	const row, gap = 30, 1
+	listHeight = max(listHeight/float32(row+gap), 3) * float32(row+gap)
+	if listHeight > float32(len(a.libs)*(row+gap)) {
+		listHeight = float32(len(a.libs) * (row + gap))
+	}
 	sel.Popup(func(panel ui.Element) {
 		panel.Margin(6, 0, 0, 0).Padding(5).Gap(1).MinWidth(180).MaxWidth(sidebarWidth+60).
-			Radius(12).Background(pop.fill).Border(0.5, pop.edge).Shadow(0, 8, 24, -4, ui.RGBA(0, 0, 0, 0.2))
-		for _, lib := range a.libs {
-			name := lib.name()
-			item := sel.Item(lib.id).Label(name).Height(30).PaddingX(8).Gap(8).Radius(7).AlignItems(ui.Center)
-			if item.Highlighted() {
-				item.Background(p.press)
-			}
-			item.Children(func() {
-				check := ui.Icon(c, iconCheck).Size(14, 14).TextColor(p.text).Shrink(0)
-				if lib != a.library {
-					check.Opacity(0)
+			MaxHeight((listHeight + 10)).Radius(12).Background(pop.fill).Border(0.5, pop.edge).
+			Shadow(0, 8, 24, -4, ui.RGBA(0, 0, 0, 0.2))
+		ui.Scroll(c).Height(listHeight).MinWidth(180).Gap(1).Scrollbars(true).
+			ScrollbarAxes(false, true).KeepScrollbars(true).Children(func() {
+			for _, lib := range a.libs {
+				name := lib.name()
+				item := sel.Item(lib.id).Label(name).Height(30).PaddingX(8).Gap(8).Radius(7).AlignItems(ui.Center)
+				if item.Highlighted() {
+					item.Background(p.press)
 				}
-				ui.Text(c, name).FontSize(13).TextColor(p.text).SingleLine().Shrink(1).MinWidth(0)
-			})
-		}
+				item.Children(func() {
+					check := ui.Icon(c, iconCheck).Size(14, 14).TextColor(p.text).Shrink(0)
+					if lib != a.library {
+						check.Opacity(0)
+					}
+					ui.Text(c, name).FontSize(13).TextColor(p.text).SingleLine().Shrink(1).MinWidth(0)
+				})
+			}
+		})
 	})
 	if b.Changed() {
 		a.switchSource(chosen)

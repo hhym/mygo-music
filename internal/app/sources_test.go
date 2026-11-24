@@ -1583,3 +1583,45 @@ func TestPluginRepoOpensGitHub(t *testing.T) {
 	}
 	settled(tt)
 }
+
+// A list of sources longer than the window scrolls, so the ones past the fold
+// can still be chosen, with a scrollbar down its side.
+func TestSourceSwitcherScrolls(t *testing.T) {
+	a := newTestApp()
+	for i := 2; i <= 26; i++ {
+		src := newFakeSource(fmt.Sprintf("source%d", i))
+		src.info.Name = fmt.Sprintf("Source %d", i)
+		addFake(a, src)
+	}
+	const winH = 360
+	tt := ui.NewTester(a.view, 360, winH)
+	settled(tt)
+	if err := tt.Click("Plugin"); err != nil {
+		t.Fatal(err)
+	}
+	tt.Frame()
+	last, ok := tt.Find("Source 26")
+	if !ok {
+		t.Fatalf("the list has no last source: %q", tt.Texts())
+	}
+	if last.Y+last.H <= float32(winH) {
+		t.Fatalf("the list fits the window already: %v", last)
+	}
+	// The wheel over the list scrolls it, as a touchpad's moves do.
+	first, ok := tt.Find("Source 2")
+	if !ok {
+		t.Fatalf("the list has no second source: %q", tt.Texts())
+	}
+	x, y := first.X+first.W/2, first.Y+first.H/2
+	tt.Move(x, y)
+	for range 20 {
+		tt.Scroll(x, y, 0, 120)
+	}
+	last, ok = tt.Find("Source 26")
+	if !ok {
+		t.Fatalf("scrolling lost the list: %q", tt.Texts())
+	}
+	if last.Y < 0 || last.Y+last.H > float32(winH) {
+		t.Fatalf("still outside the window after scrolling: %v", last)
+	}
+}
