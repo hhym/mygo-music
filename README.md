@@ -4,7 +4,7 @@ A native desktop music player written in Go with [MyGo](https://github.com/egois
 
 ## Features
 
-- Local files (MP3, FLAC, Ogg Vorbis, WAV, and ALAC, FLAC or AAC in .m4a and .aac) with tags, covers and `.lrc` lyrics, and APE, WMA, AIFF, WavPack, TTA, Ogg Opus, DSD and the rest through FFmpeg when it is installed
+- Local files (MP3, FLAC, Ogg Vorbis, WAV, and ALAC, FLAC or AAC in .m4a and .aac) with tags, covers and `.lrc` lyrics, and APE, WMA, AIFF, WavPack, TTA, Ogg Opus, DSD and the rest through FFmpeg when it is installed. APE and WMA keep their tags in formats of their own, which the app reads itself: APEv2 for APE, ASF objects for WMA, covers and lyrics among them
 - Playlists, liked songs, search, albums and artists
 - Now Playing with lyric stage styles, cover wall, queue, shuffle and repeat
 - Notch player on macOS, tray, media keys
@@ -17,6 +17,8 @@ A native desktop music player written in Go with [MyGo](https://github.com/egois
 ## FFmpeg
 
 APE, WMA, AIFF, WavPack, TTA, AMR, Ogg Opus, DSD and Matroska audio are decoded by [FFmpeg](https://ffmpeg.org), which the app doesn't ship: it plays what its own decoders don't by running one it finds. A seek starts FFmpeg again at the file's offset, and the visualizers are fed from what it decodes, as from any other song.
+
+Their tags need no FFmpeg: an APE file's APEv2 tag sits at its end, and a WMA's is the ASF header at its start, both read by the app itself, so titles, artists, albums, years, track and disc numbers, lyrics, ReplayGain and covers are there whether FFmpeg is installed or not.
 
 It is looked for, in this order:
 

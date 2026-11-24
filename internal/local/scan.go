@@ -413,6 +413,12 @@ func readTags(f *os.File, typ string, size int64) (t tags) {
 	// The library takes a FLAC behind an ID3 tag for an MP3.
 	start := int64(0)
 	switch typ {
+	case "ape":
+		// APEv2 keeps what it says at the end of the file, in its own way.
+		return apeTags(f, size)
+	case "wma":
+		// A WMA is an ASF file, whose header keeps what it says.
+		return asfTags(f, size)
 	case "flac":
 		start = id3v2Size(f)
 	case "wav":
@@ -612,6 +618,15 @@ func fileType(f io.ReaderAt, path string) string {
 		}
 	}
 	clear(head[:])
+	var top [16]byte
+	if _, err := f.ReadAt(top[:], 0); err == nil {
+		if string(top[:4]) == "MAC " {
+			return "ape" // Monkey's Audio, by its own name for it
+		}
+		if bytes.Equal(top[:], asfHeaderGUID[:]) {
+			return "wma"
+		}
+	}
 	if _, err := f.ReadAt(head[:4], id3v2Size(f)); err == nil && string(head[:4]) == "fLaC" {
 		return "flac"
 	}
