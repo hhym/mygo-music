@@ -2,6 +2,7 @@ package player
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"math"
 	"sync"
@@ -91,8 +92,16 @@ func openDecoded(dl *download, open func(io.ReadSeeker) (audio.Decoder, error)) 
 
 // openMP4Stream opens an .m4a, of ALAC, FLAC or AAC. One cut into fragments,
 // as a stream for DASH is, plays as its fragments come, its length from its
-// index.
-func openMP4Stream(dl *download) (*decodedStream, error) { return openDecoded(dl, mp4.NewDecoder) }
+// index. A track whose codec none of the app's decoders decodes, as HE-AAC's,
+// is one FFmpeg can: it is left to it.
+func openMP4Stream(dl *download) (*decodedStream, error) {
+	if dl.size > 0 {
+		if t, err := mp4.ReadTrack(&downloadFile{dl: dl}, dl.size); err == nil && !t.Decodable() {
+			return nil, fmt.Errorf("%w: %s, which the app's decoders don't decode", errOtherFormat, t.Codec)
+		}
+	}
+	return openDecoded(dl, mp4.NewDecoder)
+}
 
 // openFLACStream opens a FLAC file: the lossless and Hi-Res streams. A seek
 // lands on the very sample.

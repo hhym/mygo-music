@@ -330,7 +330,7 @@ func (s *Source) readFile(file found) (entry, bool) {
 	case "m4a":
 		var ok bool
 		if track, ok = m4aTrack(f, file.size); !ok {
-			return entry{}, false // HE-AAC, say, which the player doesn't decode
+			return entry{}, false // no sound track at all
 		}
 	case "aac":
 		if !adtsPlayable(f) {

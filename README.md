@@ -20,6 +20,8 @@ APE, WMA, AIFF, WavPack, TTA, AMR, Ogg Opus, DSD and Matroska audio are decoded 
 
 Their tags need no FFmpeg: an APE file's APEv2 tag sits at its end, and a WMA's is the ASF header at its start, both read by the app itself, so titles, artists, albums, years, track and disc numbers, lyrics, ReplayGain and covers are there whether FFmpeg is installed or not.
 
+HE-AAC, in an .m4a, is left to FFmpeg as well: the app's AAC decoder reads AAC-LC only, so a track with SBR, which its `esds` says it is, plays through FFmpeg when it is there, and says what it needs when it isn't.
+
 It is looked for, in this order:
 
 1. `MYGO_FFMPEG`, if set to a path or a name to look up
