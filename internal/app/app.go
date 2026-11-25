@@ -10,6 +10,7 @@ import (
 	"sync/atomic"
 
 	"github.com/egoist/mygo"
+	_ "github.com/egoist/mygo/locales/zh-Hans" // MyGo's own strings, as its text fields' menus
 	"github.com/egoist/mygo/ui"
 
 	"mygo-music/internal/i18n"
@@ -338,7 +339,11 @@ func Run() error {
 	mygo.App.WhenReady(func() {
 		a.settings = loadSettings()
 		a.settings.applyAppearance()
+		// The languages the app is written in, for MyGo's own texts: its texts'
+		// menus, as a text field's Undo and Paste, say them in the listener's.
+		mygo.App.SetLanguages(i18n.English, i18n.Chinese)
 		i18n.SetLanguage(i18n.Resolve(a.settings.Language, systemLanguages()))
+		a.useLocale(a.settings.Language)
 		a.npPane = a.lyricsPaneChosen()
 		if a.settings.PlayerStyle != "" {
 			go retroBitmaps() // rendered before Now Playing first shows them

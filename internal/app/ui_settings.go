@@ -85,6 +85,7 @@ var systemLanguages = func() []string { return mygo.App.PreferredLanguages() }
 func (a *app) setLanguage(code string) {
 	a.settings.Language = code
 	i18n.SetLanguage(i18n.Resolve(code, systemLanguages()))
+	a.useLocale(code)
 	a.changed()
 	if a.win != nil {
 		a.setMenu()
@@ -856,4 +857,18 @@ func (a *app) saveSetting(lib *library, key, value string, done func(error)) {
 			a.loadAccount(lib)
 		})
 	}()
+}
+
+// useLocale tells MyGo the language of the app, for the texts of its own that
+// the app doesn't write, as the menu a text field opens: its Undo and Paste.
+// Following the system is following the user's languages again.
+func (a *app) useLocale(code string) {
+	if !mygo.App.IsReady() {
+		return
+	}
+	if code == i18n.System {
+		mygo.App.SetLocale("")
+		return
+	}
+	mygo.App.SetLocale(i18n.Resolve(code, systemLanguages()))
 }
