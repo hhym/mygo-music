@@ -240,9 +240,73 @@ func (a *app) sidebar(c *ui.Context) {
 			}
 		})
 
+		// The colors the app draws in, above the plugins, which go with them.
+		a.appearanceButton(c)
 		// The plugins others made are the app's, whichever source is active.
 		a.navItem(c, iconPlug, T("Plugins"), route{page: pagePlugins})
 		a.accountRow(c)
+	})
+}
+
+// appearanceButton is the app's colors in the sidebar, above the plugins: a
+// click lists them, one click more makes them the app's.
+func (a *app) appearanceButton(c *ui.Context) {
+	p := a.pal
+	b := ui.ButtonBase(c.Key("appearance")).Height(34).PaddingX(10).Gap(10).Radius(8).AlignItems(ui.Center).Justify(ui.Start).
+		FocusRing(false).Expanded(a.themeOpen).Label(T("Appearance"))
+	if b.Hovered() {
+		b.Background(p.hover)
+	}
+	b.Children(func() {
+		ui.Icon(c, iconShirt).Size(17, 17).TextColor(p.text)
+		ui.Text(c, T("Appearance")).FontSize(13.5).FontWeight(500).TextColor(p.text).Grow(1).Shrink(1).MinWidth(0)
+		ui.Icon(c, iconUpDown).Size(13, 13).TextColor(p.faint)
+	})
+	if b.Clicked() {
+		a.themeOpen = !a.themeOpen
+	}
+	a.appearanceMenu(c, b)
+}
+
+// appearanceMenu lists the themes above the appearance button, the one in use
+// marked. Long as the list is, it scrolls in the room the screen leaves.
+func (a *app) appearanceMenu(c *ui.Context, row ui.Element) {
+	p := a.pal
+	pop := popoverColors(p.dark)
+	ui.PopoverBase(c.Key("appearance-menu"), row, &a.themeOpen, func(panel ui.Element) {
+		panel.AttachTo(row, ui.AnchorBottomStart, ui.AnchorTopStart).Margin(0, 0, 0, 6).Padding(5).
+			Radius(12).Background(pop.fill).Border(0.5, pop.edge).Shadow(0, 8, 24, -4, ui.RGBA(0, 0, 0, 0.2)).
+			Role(ui.RoleMenu).FocusGroup(ui.Vertical).Label(T("Appearance")).Width(206)
+		// As tall as the themes need, or as the room above the button leaves.
+		const item = 28
+		h := float32(len(themeChoices)*item + len(themeChoices) - 1)
+		if room := row.Bounds().Y - 16; room > 120 {
+			h = min(h, room)
+		}
+		ui.Scroll(c).Height(h).Gap(1).Scrollbars(true).Children(func() {
+			chosen := themeChoiceOf(a.settings.Appearance).id
+			for _, tc := range themeChoices {
+				label := T(tc.label)
+				b := ui.ButtonBase(c.Key("theme:" + tc.id)).Role(ui.RoleMenuItem).Label(label).Height(27).PaddingX(8).Gap(8).
+					Radius(7).AlignItems(ui.Center).Justify(ui.Start).FocusRing(false)
+				if b.Hovered() || b.FocusVisible() {
+					b.Background(p.press)
+				}
+				b.Children(func() {
+					ui.Text(c, label).FontSize(13).Grow(1).Shrink(1).MinWidth(0)
+					if tc.id == chosen {
+						ui.Icon(c, iconCheck).Size(14, 14).TextColor(p.accent)
+					}
+				})
+				if b.Clicked() {
+					a.themeOpen = false
+					if tc.id != chosen {
+						a.settings.Appearance = tc.id
+						a.changed()
+					}
+				}
+			}
+		})
 	})
 }
 
@@ -695,7 +759,7 @@ func (a *app) sourceSwitcher(c *ui.Context) {
 	}
 	sel.Popup(func(panel ui.Element) {
 		panel.Margin(6, 0, 0, 0).Padding(5).Gap(1).MinWidth(180).MaxWidth(sidebarWidth+60).
-			MaxHeight((listHeight + 10)).Radius(12).Background(pop.fill).Border(0.5, pop.edge).
+			MaxHeight((listHeight+10)).Radius(12).Background(pop.fill).Border(0.5, pop.edge).
 			Shadow(0, 8, 24, -4, ui.RGBA(0, 0, 0, 0.2))
 		ui.Scroll(c).Height(listHeight).MinWidth(180).Gap(1).Scrollbars(true).
 			ScrollbarAxes(false, true).KeepScrollbars(true).Children(func() {

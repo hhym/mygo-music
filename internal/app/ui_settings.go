@@ -336,20 +336,6 @@ func (a *app) settingsSections(c *ui.Context, p palette) []settingsSection {
 				a.setLanguage(code)
 			}
 		})
-		row(T("Appearance"), T("The colors of the windows, light or dark, or one of MyGo's own palettes"), func() {
-			labels := make([]string, len(themeChoices))
-			at := 0
-			for i, tc := range themeChoices {
-				labels[i] = tc.label
-				if tc.id == s.Appearance {
-					at = i
-				}
-			}
-			if i, ok := choice(c, "appearance", T("Appearance"), labels, at); ok {
-				s.Appearance = themeChoices[i].id
-				a.changed()
-			}
-		})
 		row(T("Now Playing Style"), T("Show the song playing as its cover, or as a record or a cassette turning as it plays"), func() {
 			labels := make([]string, len(playerStyles))
 			at := 0

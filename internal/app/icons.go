@@ -52,6 +52,7 @@ var (
 	iconComment = strokeIcon(`<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>`)
 	iconPlus    = strokeIcon(`<path d="M12 5v14"/><path d="M5 12h14"/>`)
 	iconCheck   = strokeIcon(`<path d="m5 12 4 4L19 6"/>`)
+	iconShirt   = strokeIcon(`<path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.57a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 1 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.57a2 2 0 0 0-1.34-2.23z"/>`)
 	iconX       = strokeIcon(`<path d="M18 6 6 18"/><path d="m6 6 12 12"/>`)
 	iconMore    = fillIcon(`<circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/>`)
 )

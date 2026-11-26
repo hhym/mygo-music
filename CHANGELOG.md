@@ -2,6 +2,12 @@
 
 All notable changes to MyGo Music are written down here. Versions follow [Semantic Versioning](https://semver.org).
 
+## [0.1.32] - 2026-11-27
+
+### Changed
+
+- The appearance is the sidebar's own now, above Plugins: a shirt, and a click lists the themes, the one in use marked, and makes another the app's. Settings > General no longer carries it.
+
 ## [0.1.31] - 2026-11-27
 
 ### Changed

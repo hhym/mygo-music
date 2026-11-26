@@ -86,6 +86,7 @@ type app struct {
 	forward []route // the pages gone back from, the last first to go to
 
 	accountOpen bool         // the dropdown of the account row shows
+	themeOpen   bool         // the appearance picker in the sidebar shows
 	signIn      signInDialog // signing in to a source
 	// signInPages are the windows of plugins' sign-in pages showing, by
 	// plugin. Main thread only.
