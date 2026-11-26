@@ -68,7 +68,8 @@ func (a *app) view(c *ui.Context) {
 		})
 		a.nowPlayingLayer(c, npOpen, npSettled)
 	})
-	a.signInDialog(c, a.pal, false)
+	a.signInDialog(c, a.pal)
+	a.installDialog(c, a.pal)
 	a.playlistNameDialog(c)
 	a.deletePlaylistDialog(c)
 	if a.toast != "" {
@@ -121,6 +122,7 @@ func (a *app) show(r route) {
 	if r.src == "" {
 		r.src = a.route.src
 	}
+	a.installer.marked = "" // a plugin just installed is marked until the listener leaves
 	lib := a.libOf(r.src)
 	if lib == nil {
 		// Its source went away since: the active one's Home instead.
@@ -173,6 +175,10 @@ func (a *app) load(r route) {
 	case pageSection:
 		if r.id != "" {
 			a.loadBrowse(lib, r.id, false)
+		}
+	case pagePlugins:
+		if r.id == communityTab {
+			a.loadCommunity()
 		}
 	}
 }
@@ -234,6 +240,8 @@ func (a *app) sidebar(c *ui.Context) {
 			}
 		})
 
+		// The plugins others made are the app's, whichever source is active.
+		a.navItem(c, iconPlug, T("Plugins"), route{page: pagePlugins})
 		a.accountRow(c)
 	})
 }
@@ -403,6 +411,8 @@ func (a *app) content(c *ui.Context) {
 		a.browsePage(c)
 	case pageSection:
 		a.sectionPage(c)
+	case pagePlugins:
+		a.pluginsPage(c)
 	}
 }
 
@@ -432,8 +442,8 @@ func (a *app) remedy(c *ui.Context) {
 			a.promptSignIn(lib)
 		}
 	case lib.needsSetup:
-		if ui.PrimaryButton(c.Key("setup"), T("Open Settings")).Clicked() {
-			a.openSourceSettings()
+		if ui.PrimaryButton(c.Key("setup"), T("Open Plugins")).Clicked() {
+			a.openPlugins()
 		}
 	}
 }

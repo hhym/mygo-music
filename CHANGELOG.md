@@ -2,6 +2,31 @@
 
 All notable changes to MyGo Music are written down here. Versions follow [Semantic Versioning](https://semver.org).
 
+## [0.1.28] - 2026-11-26
+
+### Added
+
+- FFmpeg plays what the app's own decoders don't: APE, WMA, AIFF, WavPack, TTA, Ogg Opus, AMR, DSD and Matroska audio. Settings > Playback > FFmpeg says which one the app found, or where to put it. HE-AAC .m4a files, whose SBR the app's AAC decoder doesn't read, are listed and play through it too.
+- APE and WMA tags, covers and lyrics are read by the app itself, without FFmpeg: APEv2 at an APE file's end, ASF objects in a WMA's header.
+- Settings > General > Appearance has four themes of its own beside light and dark: eye care green, amber, deep teal and black gold, each with its palettes for the windows, sidebar and controls.
+- MyGo's own texts, as a text field's Undo, Cut and Paste menu, are in the listener's language, Chinese included.
+
+### Changed
+
+- A list of sources longer than the window scrolls in the sidebar's switcher, with its scrollbar showing.
+- Up to date with 0.1.26: plugins moved to the Plugins page in the main window.
+
+## [0.1.26] - 2026-11-25
+
+### Added
+
+- Plugins in the sidebar lists the plugins others published on GitHub, a page at a time, with a search, to install with a click. A plugin just installed shows on the Installed tab, scrolled to and marked.
+- Plugins can name an icon in `plugin.json`. One installed from GitHub without one shows its owner's picture.
+
+### Changed
+
+- The plugins installed moved from Settings to the Plugins page in the main window, a card each, with what each asks for under it. A plugin that needs setting up takes you there.
+
 ## [0.1.25] - 2026-11-14
 
 ### Added
@@ -247,6 +272,7 @@ All notable changes to MyGo Music are written down here. Versions follow [Semant
 
 The first release: a native music player that plays your local files and gets everything else from plugins.
 
+[0.1.26]: https://github.com/egoist/mygo-music/compare/v0.1.25...v0.1.26
 [0.1.25]: https://github.com/egoist/mygo-music/compare/v0.1.24...v0.1.25
 [0.1.24]: https://github.com/egoist/mygo-music/compare/v0.1.23...v0.1.24
 [0.1.23]: https://github.com/egoist/mygo-music/compare/v0.1.22...v0.1.23

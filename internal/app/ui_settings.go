@@ -52,19 +52,16 @@ func (a *app) openSettings() {
 	})
 	a.settingsWin.OnClosed(func() {
 		a.settingsWin = nil
-		// Its sign-in dialog goes with it; a sign-in on its way still counts.
-		if a.signIn.here {
-			a.signIn.open = false
-		}
 		a.syncDock()
 	})
 	a.syncDock()
 }
 
-// openSourceSettings shows the page of the settings where plugins are set up.
-func (a *app) openSourceSettings() {
-	a.settingsPage, a.settingsQuery = "plugins", ""
-	a.openSettings()
+// openPlugins shows the Plugins page in the main window, on its Installed tab,
+// where plugins are set up.
+func (a *app) openPlugins() {
+	a.showMain()
+	a.open(route{page: pagePlugins})
 }
 
 // changed applies the settings everywhere and keeps them.
@@ -211,17 +208,11 @@ func (a *app) settingsView(c *ui.Context) {
 			header := ui.Row(c.Key("header")).Absolute().Top(0).Left(0).Right(0).Height(topBar(c)).Padding(0, right, 0, 32).AlignItems(ui.Center).DragWindow()
 			header.Children(func() {
 				ui.Text(c, title).FontSize(15).FontWeight(700).SingleLine().Shrink(1).MinWidth(0)
-				if query == "" && current.id == "plugins" {
-					ui.Box(c).Grow(1)
-					a.installMenu(c, p)
-				}
 			})
 			// The pointer over it brings the edge up too, as AppKit's does.
 			edge.Opacity(edgeShown(edge, a.settingsUnderTop || header.Hovered()))
 		})
 	})
-	a.installDialog(c, p)
-	a.signInDialog(c, p, true)
 }
 
 // settingsSidebarWidth is the width of the list of the settings' pages.
@@ -291,23 +282,28 @@ func (a *app) settingsGroup(c *ui.Context, p palette, sec settingsSection, title
 	all := query == "" || settingsMatch(query, sec.title)
 	ui.Column(c.Key(sec.id)).Radius(12).Background(p.bg).Border(1, p.hairline).Dividers(1, p.hairline).Children(func() {
 		sec.build(func(label, desc string, control func()) {
-			if !all && !settingsMatch(query, label, desc) {
-				return
+			if all || settingsMatch(query, label, desc) {
+				settingsRowView(c, p, label, desc, control)
 			}
-			ui.Row(c).Padding(12, 16).Gap(16).AlignItems(ui.Center).MinHeight(48).Children(func() {
-				ui.Column(c).Grow(1).Shrink(1).MinWidth(0).Gap(3).Children(func() {
-					ui.Text(c, label).FontSize(13.5).FontWeight(500)
-					if desc != "" {
-						ui.Text(c, desc).FontSize(12).TextColor(p.muted).LineHeight(1.4)
-					}
-				})
-				control()
-			})
 		}, func(text string, draw func()) {
 			if all || settingsMatch(query, text) {
 				draw()
 			}
 		})
+	})
+}
+
+// settingsRowView is a row of the settings: what it is, said under it, and its
+// control at the end.
+func settingsRowView(c *ui.Context, p palette, label, desc string, control func()) {
+	ui.Row(c).Padding(12, 16).Gap(16).AlignItems(ui.Center).MinHeight(48).Children(func() {
+		ui.Column(c).Grow(1).Shrink(1).MinWidth(0).Gap(3).Children(func() {
+			ui.Text(c, label).FontSize(13.5).FontWeight(500)
+			if desc != "" {
+				ui.Text(c, desc).FontSize(12).TextColor(p.muted).LineHeight(1.4)
+			}
+		})
+		control()
 	})
 }
 
@@ -389,8 +385,6 @@ func (a *app) settingsSections(c *ui.Context, p palette) []settingsSection {
 			})
 		}
 	})
-
-	add("plugins", T("Plugins"), iconPlug, func(row settingsRow, block settingsBlock) { a.sourceSettings(c, row, block, p) })
 
 	// Only on macOS, the one with a notch player.
 	if a.notch != nil {
@@ -540,138 +534,11 @@ func (a *app) anyCan(what string) bool {
 	return false
 }
 
-// sourceSettings lists the sources, each with what it asks of the listener,
-// and where more of them come from.
-func (a *app) sourceSettings(c *ui.Context, row settingsRow, block settingsBlock, p palette) {
-	for _, lib := range a.allLibs {
-		if lib.id == local.ID {
-			a.localSettings(c, lib, row, block, p)
-			continue
-		}
-		text := lib.name()
-		for _, st := range lib.src.Info().Settings {
-			text += " " + st.Label + " " + st.Help
-		}
-		block(text, func() { a.pluginSettings(c.Key(lib.id), lib, p) })
-	}
-}
-
 // revealFolder shows a folder in the file manager, making it if need be;
 // tests replace it.
 var revealFolder = func(dir string) {
 	os.MkdirAll(dir, 0o755)
 	mygo.Shell.OpenPath(dir)
-}
-
-// localSettings are the folders of the built-in source.
-func (a *app) localSettings(c *ui.Context, lib *library, row settingsRow, block settingsBlock, p palette) {
-	if a.local == nil {
-		return
-	}
-	folders := a.local.Folders()
-	desc := T("Add the folders where your music lives")
-	if a.local.Scanning() {
-		desc = T("Looking for music…")
-	} else if len(folders) > 0 {
-		desc = Tf("%d songs found", a.local.TrackCount())
-	}
-	enabled := a.pluginEnabled(lib)
-	desc = T("Built-in") + " · " + desc
-	row(T("Local Files"), desc, func() {
-		ui.Row(c).Gap(8).AlignItems(ui.Center).Children(func() {
-			if enabled && len(folders) > 0 && ui.Button(c.Key("rescan"), T("Rescan")).Disabled(a.local.Scanning()).Clicked() {
-				a.local.Rescan()
-			}
-			if enabled && ui.Button(c.Key("add-folder"), T("Add Folder…")).Clicked() {
-				a.addMusicFolder()
-			}
-			a.pluginSwitch(c, lib)
-		})
-	})
-	if !enabled {
-		return
-	}
-	for _, dir := range folders {
-		block(dir, func() {
-			ui.Row(c.Key(dir)).Padding(8, 16).Gap(10).AlignItems(ui.Center).Children(func() {
-				ui.Icon(c, iconFolder).Size(15, 15).TextColor(p.muted)
-				ui.Text(c, dir).FontSize(12.5).SingleLine().Grow(1).Shrink(1).MinWidth(0)
-				if ui.Button(c.Key("remove"), T("Remove")).Clicked() {
-					a.local.RemoveFolder(dir)
-				}
-			})
-		})
-	}
-}
-
-// pluginSettings is a plugin: who's signed in, and what it asks of the listener.
-func (a *app) pluginSettings(c *ui.Context, lib *library, p palette) {
-	info := lib.src.Info()
-	enabled := a.pluginEnabled(lib)
-	ui.Column(c).Padding(12, 16).Gap(10).Children(func() {
-		ui.Row(c).Gap(10).AlignItems(ui.Center).MinHeight(24).Children(func() {
-			ui.Column(c).Grow(1).Shrink(1).MinWidth(0).Gap(3).Children(func() {
-				name := lib.name()
-				if info.Version != "" {
-					name += " " + info.Version
-				}
-				ui.Text(c, name).FontSize(13.5).FontWeight(500)
-				// Where it came from, a link to its repository, and who's signed
-				// in, on one line.
-				from, url := pluginFrom(lib)
-				signedIn := ""
-				if enabled && !lib.needsSetup && lib.account != nil {
-					signedIn = Tf("Signed in as %s", lib.account.Name)
-				}
-				if from != "" || signedIn != "" {
-					ui.Row(c).MinWidth(0).Children(func() {
-						if url != "" {
-							ui.Link(c, from, url).FontSize(12).TextColor(p.muted).SingleLine().Shrink(0).Tooltip(T("Open on GitHub"))
-						} else if from != "" {
-							ui.Text(c, from).FontSize(12).TextColor(p.muted).SingleLine().Shrink(0)
-						}
-						if signedIn != "" {
-							if from != "" {
-								signedIn = " · " + signedIn
-							}
-							ui.Text(c, signedIn).FontSize(12).TextColor(p.muted).SingleLine().Shrink(1).MinWidth(0)
-						}
-					})
-				}
-				if enabled && lib.needsSetup {
-					ui.Text(c, setupNotice(lib, info)).FontSize(12).TextColor(p.accent).LineHeight(1.4)
-				}
-				a.pluginUpdateError(c, lib, p)
-			})
-			a.pluginUpdateButton(c, lib)
-			switch {
-			case !enabled:
-			case lib.account == nil && lib.accountUnknown():
-				// A source not yet used hasn't said who's signed in: asked now, its
-				// row offers no sign-in to someone who already is.
-				a.loadAccount(lib)
-			case lib.account != nil && lib.can("signOut"):
-				if ui.Button(c.Key("sign-out"), T("Sign Out")).Clicked() {
-					a.signOut(lib)
-				}
-			case lib.account == nil && lib.can("signIn"):
-				if ui.PrimaryButton(c.Key("sign-in"), T("Sign In")).Clicked() {
-					a.promptSignInInSettings(lib)
-				}
-			}
-			a.pluginMenu(c, lib, p)
-			a.pluginSwitch(c, lib)
-		})
-		if !enabled {
-			return
-		}
-		if g, ok := lib.src.(guarded); ok {
-			a.pluginPermissions(c.Key("permissions"), lib, g, p)
-		}
-		for _, st := range info.Settings {
-			a.sourceSetting(c.Key(st.Key), lib, st, p)
-		}
-	})
 }
 
 // setupNotice says what a plugin that needs setting up wants: what it said, or
@@ -711,34 +578,6 @@ type guarded interface {
 	Permissions() plugin.Permissions
 	Granted() bool
 	Grant(on bool) error
-}
-
-// pluginPermissions says what a plugin can reach, and asks before it may start
-// programs, which can do anything the listener can. It may not until they say.
-func (a *app) pluginPermissions(c *ui.Context, lib *library, g guarded, p palette) {
-	perms := g.Permissions()
-	if len(perms.Network) > 0 {
-		reach := Tf("Can reach %s", strings.Join(perms.Network, ", "))
-		if slices.Contains(perms.Network, "*") {
-			reach = T("Can reach any website")
-		}
-		ui.Text(c, reach).FontSize(12).TextColor(p.muted).LineHeight(1.4)
-	}
-	if len(perms.Process) == 0 {
-		return
-	}
-	granted := g.Granted()
-	ui.Row(c).Gap(10).AlignItems(ui.Center).Children(func() {
-		ui.Text(c, programsWarning(perms.Process)).
-			FontSize(12).TextColor(p.muted).LineHeight(1.4).Grow(1).Shrink(1).MinWidth(0)
-		label := T("Allow Programs")
-		if granted {
-			label = T("Stop Allowing")
-		}
-		if ui.Button(c.Key("grant"), label).Clicked() {
-			a.grantPrograms(lib, g, !granted)
-		}
-	})
 }
 
 // programsWarning says which programs a plugin wants to start, before the

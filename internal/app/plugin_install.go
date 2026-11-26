@@ -20,8 +20,8 @@ import (
 //
 //	mygo-music://install-plugin?repo=owner/repo
 //
-// which opens the plugins' settings and asks about it there, as one chosen from
-// the + menu of their header is asked about. Nothing installs without the
+// which opens the Plugins page and asks about it there, as one chosen from the
+// + menu by its heading, or the community's list on it, is asked about. Nothing installs without the
 // listener allowing it.
 
 // linkScheme is the scheme of the app's links, declared in mygo.config.ts: the
@@ -60,7 +60,7 @@ var pickPlugin = func(a *app, folder bool, got func(string)) {
 // plugin, on a goroutine, for it blocks, calling yes if they say so; tests
 // replace it, and trashItem.
 var confirmRemovePlugin = func(a *app, name string, yes func()) {
-	parent := a.settingsWin
+	parent := a.win
 	go func() {
 		res, err := mygo.Dialog.Message(mygo.MessageOptions{
 			Parent:             parent,
@@ -100,6 +100,11 @@ type pluginInstaller struct {
 	// found is the new version checking found of a plugin, by ID, for updating
 	// to install without asking GitHub again; after the app opens again, it asks.
 	found map[string]*plugin.Release
+	// marked is the plugin just installed, which the Installed tab marks until
+	// the listener leaves it, and reveal whether its card is still to scroll
+	// into view.
+	marked string
+	reveal bool
 }
 
 // checkResult is what checking a plugin for a new version came to.
@@ -142,7 +147,7 @@ func (a *app) installFromRepo() {
 }
 
 // openLink acts on a link of the app's scheme. One to install a plugin shows the
-// plugins' settings with its repository in the field, and downloads it to ask
+// Plugins page with its repository in the field, and downloads it to ask
 // about it, unless another is downloading, when Install takes it after.
 func (a *app) openLink(raw string) {
 	u, err := url.Parse(raw)
@@ -158,17 +163,25 @@ func (a *app) openLink(raw string) {
 		log.Printf("unknown link: %s", raw)
 		return
 	}
-	repo := strings.TrimSpace(u.Query().Get("repo"))
+	a.installRepo(strings.TrimSpace(u.Query().Get("repo")))
+}
+
+// installRepo shows the Plugins page with repo in the field, and downloads it to
+// ask about it there, unless another is downloading, when Install takes it after:
+// what a link to install one does, and Install on a plugin from the community.
+func (a *app) installRepo(repo string) {
 	if repo == "" {
 		return
 	}
 	in := &a.installer
 	in.repo = repo
 	in.open, in.github = true, true
-	a.openSourceSettings()
-	if a.win != nil {
-		// The link was opened in the browser, which is in front.
-		mygo.App.Focus()
+	// A link opened in the browser leaves it in front: showMain brings the app.
+	// On the Plugins page, its tab stays.
+	if a.route.page == pagePlugins && !a.nowPlaying {
+		a.showMain()
+	} else {
+		a.openPlugins()
 	}
 	if !in.busy {
 		a.installFromRepo()
@@ -230,8 +243,20 @@ func (a *app) confirmInstall() {
 				return
 			}
 			in.open = false
+			a.showInstalled(pending.Manifest.ID)
 		})
 	}()
+}
+
+// showInstalled shows a plugin just installed on the Plugins page's Installed
+// tab, from wherever it was installed, its card scrolled to and marked.
+func (a *app) showInstalled(id string) {
+	if a.route.page == pagePlugins && !a.nowPlaying {
+		a.choosePluginsTab(false)
+	} else {
+		a.open(route{page: pagePlugins})
+	}
+	a.installer.marked, a.installer.reveal = id, true
 }
 
 // cancelInstall forgets the plugin the listener didn't want.
@@ -299,7 +324,7 @@ func (a *app) removePlugin(lib *library) {
 	a.plugins = slices.DeleteFunc(a.plugins, func(q *plugin.Plugin) bool { return q == p })
 	a.enabledChanged()
 	if a.library == lib {
-		a.switchSource(a.libs[0].id)
+		a.leaveSource()
 	}
 	delete(a.settings.PluginUpdates, lib.id)
 	delete(a.installer.found, lib.id)
@@ -484,7 +509,7 @@ func more(had, wants []string) bool {
 	return false
 }
 
-// installMenu is the + of the plugins' header: the ways to install one.
+// installMenu is the + by the Plugins page's heading: the ways to install one.
 func (a *app) installMenu(c *ui.Context, p palette) {
 	in := &a.installer
 	add := iconButton(c.Key("install-plugin"), iconPlus, 16, p.muted, T("Install a Plugin"))

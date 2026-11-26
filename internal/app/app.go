@@ -35,6 +35,7 @@ const (
 	pageSavedAlbums
 	pageBrowse
 	pageSection
+	pagePlugins // the plugins others made, of no source
 )
 
 type route struct {
@@ -75,6 +76,7 @@ type app struct {
 
 	captions  captionState    // the episode playing's captions, and the model they take
 	installer pluginInstaller // installing and updating plugins
+	community communityState  // the plugins others made, for the Plugins page
 	// links are the app's links opened before its window was made, macOS
 	// handing over the one it was started with first.
 	links []string
@@ -293,7 +295,7 @@ func (a *app) setPluginEnabled(lib *library, on bool) {
 	a.enabledChanged()
 	if !on {
 		if a.library == lib {
-			a.switchSource(a.libs[0].id)
+			a.leaveSource()
 		}
 		if closer, ok := lib.src.(interface{ Close() }); ok {
 			go closer.Close()

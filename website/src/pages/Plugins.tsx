@@ -42,8 +42,8 @@ export function Plugins() {
           </h1>
           <p class="lede">
             {t(
-              'Plugins published on GitHub by the people who make them. Install one here, or with the + in Settings > Plugins by its repository. A plugin asks before it reaches anything, and you can remove it from its ⋯ menu.',
-              '由作者发布在 GitHub 上的插件。在这里安装，或在「设置 > 插件」中点 +，填入它的仓库。插件访问任何东西前都会先征得你的同意，也可以从它的 ⋯ 菜单中移除。',
+              'Plugins published on GitHub by the people who make them. Install one here, or from Plugins in the app’s sidebar, where they’re all listed too, or with its + by a repository. A plugin asks before it reaches anything, and you can remove it from its ⋯ menu.',
+              '由作者发布在 GitHub 上的插件。在这里安装，或在应用侧边栏的「插件」中安装，那里也列出了所有插件；也可以点 +，填入它的仓库。插件访问任何东西前都会先征得你的同意，也可以从它的 ⋯ 菜单中移除。',
             )}
           </p>
         </div>

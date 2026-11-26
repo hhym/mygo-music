@@ -550,9 +550,9 @@ func TestErrSignInAsksOnce(t *testing.T) {
 	}
 }
 
-// A source that answers ErrSetup needs setting up, which shows on the page and
-// its settings, and goes once a setting is kept.
-func TestErrSetupOffersSettings(t *testing.T) {
+// A source that answers ErrSetup needs setting up, which its page offers to do
+// on the Plugins page, and goes once a setting is kept there.
+func TestErrSetupOffersPlugins(t *testing.T) {
 	kept := make(chan string, 1)
 	a := newTestApp()
 	ch := posts(a)
@@ -568,12 +568,13 @@ func TestErrSetupOffersSettings(t *testing.T) {
 	if !a.needsSetup {
 		t.Fatal("doesn't need setting up")
 	}
-	if _, ok := tt.Find("Open Settings"); !ok {
-		t.Errorf("the page offers no settings: %q", tt.Texts())
+	if err := tt.Click("Open Plugins"); err != nil {
+		t.Fatalf("%v: %q", err, tt.Texts())
 	}
-
-	a.settingsPage = "plugins"
-	settings := ui.NewTester(a.settingsView, 760, 1400)
+	if a.route.page != pagePlugins {
+		t.Fatalf("on %+v", a.route)
+	}
+	settings := tt
 	settings.Frame()
 	// The field, under the title labelled as it is.
 	r, ok := settings.Find("API Key")
@@ -592,7 +593,7 @@ func TestErrSetupOffersSettings(t *testing.T) {
 	}
 }
 
-// A source that needs setting up says what for, on its page and in its settings.
+// A source that needs setting up says what for, on its page and the Plugins page.
 // Every plugin said "Fill these in for it to work", even with its fields filled
 // in, when what it wanted was a program installed: what it said was dropped.
 func TestErrSetupSaysWhy(t *testing.T) {
@@ -614,8 +615,8 @@ func TestErrSetupSaysWhy(t *testing.T) {
 		t.Errorf("the page doesn't say why: %q", tt.Texts())
 	}
 
-	a.settingsPage = "plugins"
-	settings := ui.NewTester(a.settingsView, 760, 1400)
+	a.open(route{page: pagePlugins})
+	settings := tt
 	settings.Frame()
 	if _, ok := settings.Find(why); !ok {
 		t.Errorf("the settings don't say why: %q", settings.Texts())
@@ -686,39 +687,16 @@ func TestSignInAndOut(t *testing.T) {
 	}
 }
 
-// Sign In in the settings asks in the settings window. It used to open the
-// dialog in the main window, behind the settings, where it went unseen.
-func TestSignInFromSettingsAsksThere(t *testing.T) {
-	a := newTestApp()
-	a.settingsPage = "plugins"
-	main := ui.NewTester(a.view, 1200, 800)
-	settings := ui.NewTester(a.settingsView, 780, 1000)
-	main.Frame()
-	settings.Frame()
-	if err := settings.Click("Sign In"); err != nil {
-		t.Fatal(err)
-	}
-	settled(settings)
-	settled(main)
-	if _, ok := settings.Find("Cancel"); !ok {
-		t.Errorf("no dialog in the settings: %q", settings.Texts())
-	}
-	if _, ok := main.Find("Cancel"); ok {
-		t.Error("the dialog opened in the main window")
-	}
-}
-
-// The settings ask a source not yet used who is signed in, and offer to sign
-// out of it. They used to offer Sign In, as it hadn't been asked yet.
-func TestSettingsAskAnUnusedSourceItsAccount(t *testing.T) {
+// The Plugins page asks a source not yet used who is signed in, and offers to
+// sign out of it. The settings used to offer Sign In, as it hadn't been asked yet.
+func TestPluginsAskAnUnusedSourceItsAccount(t *testing.T) {
 	a := newTestApp()
 	ch := posts(a)
 	other := newFakeSource("other")
 	other.account = func() (*music.Account, error) { return &music.Account{ID: "1", Name: "小明"}, nil }
 	lib := addFake(a, other)
 	lib.started, lib.accountAsked = false, false
-	a.settingsPage = "plugins"
-	settings := ui.NewTester(a.settingsView, 780, 1000)
+	settings := pluginsView(a, 1000)
 	settings.Frame()
 	until(t, ch, func() bool { return lib.account != nil })
 	settled(settings)
@@ -759,7 +737,7 @@ func TestSignInFailingAtOnceStaysPut(t *testing.T) {
 		}
 		return nil, errors.New(msg)
 	}
-	tt := ui.NewTester(func(c *ui.Context) { a.signInDialog(c, a.pal, false) }, 800, 600)
+	tt := ui.NewTester(func(c *ui.Context) { a.signInDialog(c, a.pal) }, 800, 600)
 	a.promptSignIn(a.library)
 	settled(tt)
 	if err := tt.Click(T("Sign In")); err != nil {
@@ -970,9 +948,9 @@ func TestSetLanguage(t *testing.T) {
 	}
 }
 
-// A plugin asking to start programs may not until the listener allows it in the
-// settings, and the same button takes that back.
-func TestSettingsAllowPrograms(t *testing.T) {
+// A plugin asking to start programs may not until the listener allows it on the
+// Plugins page, and the same button takes that back.
+func TestAllowPrograms(t *testing.T) {
 	a := newTestApp()
 	ch := posts(a)
 	src := &guardedSource{fakeSource: newFakeSource("guarded")}
@@ -980,8 +958,7 @@ func TestSettingsAllowPrograms(t *testing.T) {
 	src.perms.Network = []string{"api.example.com"}
 	addFake(a, src)
 
-	a.settingsPage = "plugins"
-	settings := ui.NewTester(a.settingsView, 760, 1400)
+	settings := pluginsView(a, 1400)
 	settings.Frame()
 	if err := settings.Click("Allow Programs"); err != nil {
 		t.Fatal(err)
@@ -1194,16 +1171,16 @@ func TestSettingsFoundControlWorks(t *testing.T) {
 	}
 }
 
-// Turning the plugin that shows off moves to the next one on, and it's gone from
-// what songs can play through; the last one on can't be turned off; and it's kept.
+// Turning the plugin that shows off moves to the next one on, staying on the
+// Plugins page, and it's gone from what songs can play through; the last one on
+// can't be turned off; and it's kept.
 func TestTurnPluginOff(t *testing.T) {
 	a := newTestApp()
 	_, other := addOther(a)
 	first := a.libs[0]
 	a.switchSource(other.id)
 	settings := func() *ui.Tester {
-		a.settingsPage = "plugins"
-		tt := ui.NewTester(a.settingsView, 780, 1400)
+		tt := pluginsView(a, 1400)
 		tt.Frame()
 		return tt
 	}
@@ -1213,6 +1190,9 @@ func TestTurnPluginOff(t *testing.T) {
 	}
 	if a.library != first {
 		t.Fatalf("still on %s", a.library.id)
+	}
+	if a.route != (route{page: pagePlugins, src: first.id}) {
+		t.Errorf("went to %+v", a.route)
 	}
 	if a.sourceByID(other.id) != nil {
 		t.Error("its songs can still play")
@@ -1235,7 +1215,7 @@ func TestTurnPluginOff(t *testing.T) {
 // From GitHub… in the plugins' + menu asks for a repository: something that's
 // no repository asks again, without going to GitHub; a repository goes, and what
 // comes back that's wrong shows, ready to try again.
-func TestInstallPluginFromSettings(t *testing.T) {
+func TestInstallPluginFromGitHub(t *testing.T) {
 	asked := make(chan string, 1)
 	was := fetchPlugin
 	defer func() { fetchPlugin = was }()
@@ -1245,8 +1225,7 @@ func TestInstallPluginFromSettings(t *testing.T) {
 	}
 	a := newTestApp()
 	ch := posts(a)
-	a.settingsPage = "plugins"
-	tt := ui.NewTester(a.settingsView, 780, 1000)
+	tt := pluginsView(a, 1000)
 	tt.Frame()
 	if err := tt.Click("Install a Plugin"); err != nil {
 		t.Fatal(err)
@@ -1279,7 +1258,7 @@ func TestInstallPluginFromSettings(t *testing.T) {
 	}
 }
 
-// A link to install a plugin shows the plugins' settings and downloads it from
+// A link to install a plugin shows the Plugins page and downloads it from
 // the repository it names, to ask about there, installing nothing by itself;
 // links to anything else do nothing.
 func TestInstallPluginFromLink(t *testing.T) {
@@ -1297,16 +1276,16 @@ func TestInstallPluginFromLink(t *testing.T) {
 	for _, link := range []string{linkScheme + "://settings", linkScheme + "://install-plugin", "https://example.com/install-plugin?repo=owner/repo"} {
 		a.openLink(link)
 	}
-	if len(asked) != 0 || a.settingsPage == "plugins" {
-		t.Fatalf("acted on a link that isn't to install one: asked %d, on %q", len(asked), a.settingsPage)
+	if len(asked) != 0 || a.route.page == pagePlugins {
+		t.Fatalf("acted on a link that isn't to install one: asked %d, on %+v", len(asked), a.route)
 	}
 
 	a.openLink(linkScheme + "://install-plugin?repo=" + url.QueryEscape("https://github.com/owner/repo/tree/main"))
 	if got := wait(t, asked, "the download"); got != "owner/repo" {
 		t.Fatalf("asked for %q", got)
 	}
-	if a.settingsPage != "plugins" {
-		t.Errorf("shows the settings' %q", a.settingsPage)
+	if a.route.page != pagePlugins {
+		t.Errorf("shows %+v", a.route)
 	}
 	runPost(t, ch)
 	if !a.installer.open || a.installer.pending == nil || a.installer.pending.Manifest.ID != "linked" {
@@ -1338,8 +1317,7 @@ func TestInstallPluginFromDisk(t *testing.T) {
 	openPlugin = func(path, _ string) (*plugin.Pending, error) { return plugin.Open(path, plugins) }
 	a := newTestApp()
 	ch := posts(a)
-	a.settingsPage = "plugins"
-	tt := ui.NewTester(a.settingsView, 780, 1000)
+	tt := pluginsView(a, 1000)
 	tt.Frame()
 
 	choose := func(item string) {
@@ -1373,10 +1351,10 @@ func TestInstallPluginFromDisk(t *testing.T) {
 	}
 }
 
-// Any plugin can be removed from its menu in the plugins' settings, from this
+// Any plugin can be removed from its menu on the Plugins page, from this
 // computer too, once the listener says so: it's gone from the sources and its
 // folder goes to the Trash. Saying no leaves it.
-func TestRemovePluginFromSettings(t *testing.T) {
+func TestRemovePlugin(t *testing.T) {
 	dir := filepath.Join(t.TempDir(), "disk")
 	os.MkdirAll(dir, 0o755)
 	os.WriteFile(filepath.Join(dir, "plugin.json"), []byte(`{"id":"disk","name":"Disk"}`), 0o644)
@@ -1398,8 +1376,7 @@ func TestRemovePluginFromSettings(t *testing.T) {
 	a := newTestApp()
 	lib := addFake(a, p)
 	a.plugins = append(a.plugins, p)
-	a.settingsPage = "plugins"
-	tt := ui.NewTester(a.settingsView, 780, 1400)
+	tt := pluginsView(a, 1400)
 	tt.Frame()
 
 	remove := func() {
@@ -1470,8 +1447,7 @@ func TestCheckPluginUpdateNow(t *testing.T) {
 	ch := posts(a)
 	addFake(a, githubPlugin(t))
 	a.settings.PluginsChecked = time.Now()
-	a.settingsPage = "plugins"
-	tt := ui.NewTester(a.settingsView, 780, 1000)
+	tt := pluginsView(a, 1000)
 	tt.Frame()
 
 	check := func() {
@@ -1520,8 +1496,7 @@ func TestUpdatePluginReusesCheck(t *testing.T) {
 	a := newTestApp()
 	ch := posts(a)
 	addFake(a, githubPlugin(t))
-	a.settingsPage = "plugins"
-	tt := ui.NewTester(a.settingsView, 780, 1000)
+	tt := pluginsView(a, 1000)
 	tt.Frame()
 	if err := tt.Click("More for GH"); err != nil {
 		t.Fatal(err)
@@ -1567,13 +1542,12 @@ func githubPlugin(t *testing.T) *plugin.Plugin {
 	return p
 }
 
-// Clicking where a plugin came from in its settings opens its repository on
+// Clicking where a plugin came from on the Plugins page opens its repository on
 // GitHub.
 func TestPluginRepoOpensGitHub(t *testing.T) {
 	a := newTestApp()
 	addFake(a, githubPlugin(t))
-	a.settingsPage = "plugins"
-	tt := ui.NewTester(a.settingsView, 780, 1000)
+	tt := pluginsView(a, 1000)
 	tt.Frame()
 	if err := tt.Click("o/gh"); err != nil {
 		t.Fatal(err)

@@ -218,6 +218,21 @@ func (a *app) switchSource(id string) {
 	}
 }
 
+// leaveSource makes the first source on the active one, as the one active was
+// turned off or removed: on the Plugins page, where that's done, the page stays,
+// now of that source; elsewhere, its Home shows.
+func (a *app) leaveSource() {
+	next := a.libs[0]
+	if a.route.page != pagePlugins || a.nowPlaying {
+		a.switchSource(next.id)
+		return
+	}
+	a.activate(next)
+	// Still the page it was, scrolled as it was.
+	a.route.src = next.id
+	a.scrolled = a.route
+}
+
 // errNoAnswer stands for a source that answered nothing where it had to answer
 // something, which shouldn't take the app down with it.
 var errNoAnswer = errors.New("the source gave no answer")
@@ -248,7 +263,7 @@ func (a *app) problem(lib *library, err error, msg string) string {
 		lib.needsSetup, lib.setupReason = true, music.Reason(err)
 		if !lib.askedSetup {
 			lib.askedSetup = true
-			a.openSourceSettings()
+			a.openPlugins()
 		}
 		if lib.setupReason != "" {
 			return lib.setupReason
@@ -269,7 +284,7 @@ func (a *app) actionFailed(lib *library, err error, msg string) {
 		a.promptSignIn(lib)
 	case errors.Is(err, music.ErrSetup):
 		lib.needsSetup, lib.setupReason = true, music.Reason(err)
-		a.openSourceSettings()
+		a.openPlugins()
 	default:
 		a.toast = msg
 	}
