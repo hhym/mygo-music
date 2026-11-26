@@ -2,6 +2,12 @@
 
 All notable changes to MyGo Music are written down here. Versions follow [Semantic Versioning](https://semver.org).
 
+## [0.1.31] - 2026-11-27
+
+### Changed
+
+- The Appearance menu lists the themes by color rather than by when they were added: light ones first, cool colors to warm, then the dark ones the same way. The system's three stay on top.
+
 ## [0.1.30] - 2026-11-26
 
 ### Changed

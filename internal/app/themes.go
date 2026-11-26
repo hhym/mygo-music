@@ -13,26 +13,30 @@ type themeChoice struct {
 // themeChoices are the appearances, the system's own light and dark first, then
 // the palettes of the app. IDs are saved in the settings, so they stay.
 var themeChoices = []themeChoice{
+	// The system's own.
 	{"system", N("Follow System")},
 	{"light", N("✻ Light")},
 	{"dark", N("◐ Dark")},
-	{"green", N("✿ Eye Care")},
-	{"amber", N("☆ Amber")},
+	// The light palettes, cool colors first and warm last, so the list reads as
+	// a wheel.
 	{"sky", N("☁ Sky")},
-	{"gold", N("☾ Black Gold")},
-	{"sepia", N("✤ Retro Brown")},
-	{"brass", N("❦ Dark Green Brass")},
-	{"wine", N("❧ Wine Cream")},
-	{"neon", N("⚡ Neon Violet")},
-	{"dusk", N("◑ Midnight Ember")},
-	{"rose", N("✺ Electric Rose")},
 	{"mist", N("◌ Mist Blue")},
-	{"sage", N("❖ Sage")},
-	{"oat", N("✧ Oat Apricot")},
 	{"klein", N("◆ Klein Blue")},
-	{"tomato", N("▲ Tomato Indigo")},
+	{"green", N("✿ Eye Care")},
+	{"sage", N("❖ Sage")},
+	{"brass", N("❦ Dark Green Brass")},
+	{"oat", N("✧ Oat Apricot")},
+	{"sepia", N("✤ Retro Brown")},
 	{"sakura", N("❀ Sakura")},
+	{"wine", N("❧ Wine Cream")},
+	{"tomato", N("▲ Tomato Indigo")},
+	{"amber", N("☆ Amber")},
+	// The dark ones, the same way.
 	{"navy", N("⚓ Navy")},
+	{"neon", N("⚡ Neon Violet")},
+	{"rose", N("✺ Electric Rose")},
+	{"dusk", N("◑ Midnight Ember")},
+	{"gold", N("☾ Black Gold")},
 }
 
 // themeChoiceOf is the choice of id, the system's own for one no longer offered,
