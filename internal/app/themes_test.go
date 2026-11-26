@@ -9,7 +9,11 @@ import (
 // The themes offered are the system's own light and dark, and the app's four
 // palettes, each with the base light or dark it draws on.
 func TestThemeChoices(t *testing.T) {
-	want := map[string]bool{"system": false, "light": false, "dark": true, "green": false, "amber": false, "teal": true, "gold": true}
+	want := map[string]bool{
+		"system": false, "light": false, "dark": true,
+		"green": false, "amber": false, "sky": false, "gold": true,
+		"neon": true, "sakura": false, "navy": true, "sepia": false, "brass": true, "wine": false,
+	}
 	for _, c := range themeChoices {
 		dark, ok := want[c.id]
 		if !ok {
@@ -20,6 +24,9 @@ func TestThemeChoices(t *testing.T) {
 			t.Errorf("%s is dark %v, want %v", c.id, got, dark)
 		}
 	}
+	if themeChoiceOf("teal").id != "sky" {
+		t.Errorf("deep teal, which sky took the place of, isn't sky")
+	}
 	if themeChoiceOf("nonsense").id != "system" {
 		t.Errorf("a theme no longer offered isn't the system's")
 	}
@@ -29,10 +36,16 @@ func TestThemeChoices(t *testing.T) {
 // colors.
 func TestPalettes(t *testing.T) {
 	palettes := map[string]palette{
-		"green": greenPalette(),
-		"amber": amberPalette(),
-		"teal":  tealPalette(),
-		"gold":  goldPalette(),
+		"green":  greenPalette(),
+		"amber":  amberPalette(),
+		"sky":    skyPalette(),
+		"gold":   goldPalette(),
+		"neon":   neonPalette(),
+		"sakura": sakuraPalette(),
+		"navy":   navyPalette(),
+		"sepia":  sepiaPalette(),
+		"brass":  brassPalette(),
+		"wine":   winePalette(),
 	}
 	bg := map[ui.Color]string{}
 	for id, p := range palettes {
@@ -44,10 +57,14 @@ func TestPalettes(t *testing.T) {
 			t.Errorf("%s has no accent", id)
 		}
 	}
-	if greenPalette().dark || amberPalette().dark {
-		t.Error("the reading themes should be light")
+	for _, id := range []string{"green", "amber", "sky", "sakura", "sepia", "wine"} {
+		if palettes[id].dark {
+			t.Errorf("%s should be light", id)
+		}
 	}
-	if !tealPalette().dark || !goldPalette().dark {
-		t.Error("deep teal and black gold should be dark")
+	for _, id := range []string{"gold", "neon", "navy", "brass"} {
+		if !palettes[id].dark {
+			t.Errorf("%s should be dark", id)
+		}
 	}
 }

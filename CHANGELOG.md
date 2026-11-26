@@ -2,6 +2,16 @@
 
 All notable changes to MyGo Music are written down here. Versions follow [Semantic Versioning](https://semver.org).
 
+## [0.1.29] - 2026-11-26
+
+### Added
+
+- Six more themes beside light and dark, each with palettes for the windows, sidebar and controls: neon purple and navy and dark green brass, the dark ones, and sakura pink, retro brown and wine cream, the light ones.
+
+### Changed
+
+- The deep teal theme is a morning sky's 天青 (Sky) now, with its pale cyan page and azure accent. Anyone whose settings still say deep teal lands on Sky.
+
 ## [0.1.28] - 2026-11-26
 
 ### Added
