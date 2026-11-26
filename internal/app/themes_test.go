@@ -6,13 +6,16 @@ import (
 	"github.com/egoist/mygo/ui"
 )
 
-// The themes offered are the system's own light and dark, and the app's four
+// The themes offered are the system's own light and dark, and the app's own
 // palettes, each with the base light or dark it draws on.
 func TestThemeChoices(t *testing.T) {
 	want := map[string]bool{
 		"system": false, "light": false, "dark": true,
 		"green": false, "amber": false, "sky": false, "gold": true,
-		"neon": true, "sakura": false, "navy": true, "sepia": false, "brass": true, "wine": false,
+		"sepia": false, "brass": false, "wine": false,
+		"neon": true, "dusk": true, "rose": true,
+		"mist": false, "sage": false, "oat": false, "klein": false, "tomato": false,
+		"sakura": false, "navy": true,
 	}
 	for _, c := range themeChoices {
 		dark, ok := want[c.id]
@@ -46,6 +49,13 @@ func TestPalettes(t *testing.T) {
 		"sepia":  sepiaPalette(),
 		"brass":  brassPalette(),
 		"wine":   winePalette(),
+		"dusk":   duskPalette(),
+		"rose":   rosePalette(),
+		"mist":   mistPalette(),
+		"sage":   sagePalette(),
+		"oat":    oatPalette(),
+		"klein":  kleinPalette(),
+		"tomato": tomatoPalette(),
 	}
 	bg := map[ui.Color]string{}
 	for id, p := range palettes {
@@ -57,12 +67,13 @@ func TestPalettes(t *testing.T) {
 			t.Errorf("%s has no accent", id)
 		}
 	}
-	for _, id := range []string{"green", "amber", "sky", "sakura", "sepia", "wine"} {
+	for _, id := range []string{"green", "amber", "sky", "sakura", "sepia", "brass", "wine",
+		"mist", "sage", "oat", "klein", "tomato"} {
 		if palettes[id].dark {
 			t.Errorf("%s should be light", id)
 		}
 	}
-	for _, id := range []string{"gold", "neon", "navy", "brass"} {
+	for _, id := range []string{"gold", "neon", "dusk", "rose", "navy"} {
 		if !palettes[id].dark {
 			t.Errorf("%s should be dark", id)
 		}

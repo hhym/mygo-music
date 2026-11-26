@@ -2,11 +2,21 @@
 
 All notable changes to MyGo Music are written down here. Versions follow [Semantic Versioning](https://semver.org).
 
+## [0.1.30] - 2026-11-26
+
+### Changed
+
+- The themes' colors are the ones picked by style, not guessed: retro (warm brown, dark green brass, wine cream), cyberpunk (deep neon violet, midnight cyan orange, electric rose), low saturation (mist blue gray, sage, oat apricot) and clash (Klein blue, tomato indigo), each with the background, text, accent and dot the style called for.
+
+### Added
+
+- Five more themes: midnight cyan orange, electric rose, mist blue gray, sage, oat apricot, Klein blue and tomato indigo.
+
 ## [0.1.29] - 2026-11-26
 
 ### Added
 
-- Six more themes beside light and dark, each with palettes for the windows, sidebar and controls: neon purple and navy and dark green brass, the dark ones, and sakura pink, retro brown and wine cream, the light ones.
+- Eight more themes beside light and dark, each with palettes for the windows, sidebar and controls: neon violet, navy and dark green brass, the dark ones, and sakura pink, retro brown, wine cream and oat apricot, the light ones.
 
 ### Changed
 

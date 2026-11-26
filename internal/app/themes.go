@@ -20,12 +20,19 @@ var themeChoices = []themeChoice{
 	{"amber", N("☆ Amber")},
 	{"sky", N("☁ Sky")},
 	{"gold", N("☾ Black Gold")},
-	{"neon", N("⚡ Neon Purple")},
-	{"sakura", N("❀ Sakura")},
-	{"navy", N("⚓ Navy")},
 	{"sepia", N("✤ Retro Brown")},
 	{"brass", N("❦ Dark Green Brass")},
 	{"wine", N("❧ Wine Cream")},
+	{"neon", N("⚡ Neon Violet")},
+	{"dusk", N("◑ Midnight Ember")},
+	{"rose", N("✺ Electric Rose")},
+	{"mist", N("◌ Mist Blue")},
+	{"sage", N("❖ Sage")},
+	{"oat", N("✧ Oat Apricot")},
+	{"klein", N("◆ Klein Blue")},
+	{"tomato", N("▲ Tomato Indigo")},
+	{"sakura", N("❀ Sakura")},
+	{"navy", N("⚓ Navy")},
 }
 
 // themeChoiceOf is the choice of id, the system's own for one no longer offered,
@@ -46,9 +53,10 @@ func themeChoiceOf(id string) themeChoice {
 // follows the system.
 func themeDark(choice themeChoice, systemDark bool) bool {
 	switch choice.id {
-	case "light", "green", "amber", "sky", "sakura", "sepia", "wine":
+	case "light", "green", "amber", "sky", "sakura", "sepia", "brass", "wine",
+		"mist", "sage", "oat", "klein", "tomato":
 		return false
-	case "dark", "gold", "neon", "navy", "brass":
+	case "dark", "gold", "neon", "dusk", "rose", "navy":
 		return true
 	}
 	return systemDark
@@ -90,18 +98,32 @@ func paletteOf(id string, dark bool) palette {
 		return skyPalette()
 	case "gold":
 		return goldPalette()
-	case "neon":
-		return neonPalette()
-	case "sakura":
-		return sakuraPalette()
-	case "navy":
-		return navyPalette()
 	case "sepia":
 		return sepiaPalette()
 	case "brass":
 		return brassPalette()
 	case "wine":
 		return winePalette()
+	case "neon":
+		return neonPalette()
+	case "dusk":
+		return duskPalette()
+	case "rose":
+		return rosePalette()
+	case "mist":
+		return mistPalette()
+	case "sage":
+		return sagePalette()
+	case "oat":
+		return oatPalette()
+	case "klein":
+		return kleinPalette()
+	case "tomato":
+		return tomatoPalette()
+	case "sakura":
+		return sakuraPalette()
+	case "navy":
+		return navyPalette()
 	}
 	if dark {
 		return darkPalette()
@@ -195,25 +217,246 @@ func goldPalette() palette {
 	}
 }
 
-// neonPalette is 紫霓虹: a night of near black violet, lit by neon purple.
+// sepiaPalette is 暖褐复古: the brown of old paper and worn leather, a dot of
+// brass in the accent.
+func sepiaPalette() palette {
+	return palette{
+		bg:             ui.Hex("#f5efe6"),
+		sidebar:        ui.Hex("#ede4d7"),
+		text:           ui.Hex("#3e2c23"),
+		muted:          ui.RGBA(62, 44, 35, 0.64),
+		faint:          ui.RGBA(62, 44, 35, 0.36),
+		hairline:       ui.RGBA(139, 94, 60, 0.14),
+		hover:          ui.RGBA(139, 94, 60, 0.07),
+		press:          ui.RGBA(139, 94, 60, 0.12),
+		accent:         ui.Hex("#8b5e3c"),
+		onAccent:       ui.Hex("#f5efe6"),
+		cardShade:      ui.RGBA(90, 60, 40, 0.16),
+		surface:        ui.Hex("#efe7db"),
+		surfaceHover:   ui.Hex("#e6dccb"),
+		surfacePressed: ui.Hex("#ddd1bc"),
+		border:         ui.Hex("#d8c9b4"),
+	}
+}
+
+// brassPalette is 墨绿黄铜: an ink green on aged paper, brass for the marks.
+func brassPalette() palette {
+	return palette{
+		bg:             ui.Hex("#ede6d6"),
+		sidebar:        ui.Hex("#e4dbc7"),
+		text:           ui.Hex("#1f2a24"),
+		muted:          ui.RGBA(31, 42, 36, 0.64),
+		faint:          ui.RGBA(31, 42, 36, 0.36),
+		hairline:       ui.RGBA(47, 79, 62, 0.16),
+		hover:          ui.RGBA(176, 141, 87, 0.10),
+		press:          ui.RGBA(176, 141, 87, 0.18),
+		accent:         ui.Hex("#2f4f3e"),
+		onAccent:       ui.Hex("#f2eee2"),
+		cardShade:      ui.RGBA(47, 79, 62, 0.14),
+		surface:        ui.Hex("#e7dfce"),
+		surfaceHover:   ui.Hex("#ded4be"),
+		surfacePressed: ui.Hex("#d3c7ac"),
+		border:         ui.Hex("#c9bca0"),
+	}
+}
+
+// winePalette is 酒红米白: wine red against the cream of a tablecloth.
+func winePalette() palette {
+	return palette{
+		bg:             ui.Hex("#f7f1e8"),
+		sidebar:        ui.Hex("#f0e4db"),
+		text:           ui.Hex("#2b1b1f"),
+		muted:          ui.RGBA(43, 27, 31, 0.64),
+		faint:          ui.RGBA(43, 27, 31, 0.36),
+		hairline:       ui.RGBA(123, 45, 59, 0.14),
+		hover:          ui.RGBA(123, 45, 59, 0.07),
+		press:          ui.RGBA(123, 45, 59, 0.12),
+		accent:         ui.Hex("#7b2d3b"),
+		onAccent:       ui.Hex("#f7f1e8"),
+		cardShade:      ui.RGBA(90, 45, 55, 0.14),
+		surface:        ui.Hex("#f1e7dd"),
+		surfaceHover:   ui.Hex("#e9dbd1"),
+		surfacePressed: ui.Hex("#e0cfc2"),
+		border:         ui.Hex("#d9c4b5"),
+	}
+}
+
+// neonPalette is 深紫霓虹: a near black violet night, lit by neon violet with a
+// cyan edge.
 func neonPalette() palette {
 	return palette{
 		dark:           true,
-		bg:             ui.Hex("#0b0710"),
-		sidebar:        ui.Hex("#130d1b"),
-		text:           ui.Hex("#f0e8ff"),
-		muted:          ui.RGBA(230, 215, 255, 0.58),
-		faint:          ui.RGBA(230, 215, 255, 0.30),
-		hairline:       ui.RGBA(180, 120, 255, 0.16),
-		hover:          ui.RGBA(180, 120, 255, 0.08),
-		press:          ui.RGBA(180, 120, 255, 0.14),
-		accent:         ui.Hex("#b06bff"),
-		onAccent:       ui.Hex("#14061f"),
-		cardShade:      ui.RGBA(0, 0, 0, 0.55),
-		surface:        ui.Hex("#180f24"),
-		surfaceHover:   ui.Hex("#221430"),
-		surfacePressed: ui.Hex("#2b1a3c"),
-		border:         ui.Hex("#38224a"),
+		bg:             ui.Hex("#0d0b1a"),
+		sidebar:        ui.Hex("#131022"),
+		text:           ui.Hex("#e8e6f0"),
+		muted:          ui.RGBA(232, 230, 240, 0.58),
+		faint:          ui.RGBA(232, 230, 240, 0.30),
+		hairline:       ui.RGBA(0, 229, 255, 0.16),
+		hover:          ui.RGBA(123, 47, 247, 0.10),
+		press:          ui.RGBA(123, 47, 247, 0.18),
+		accent:         ui.Hex("#7b2ff7"),
+		onAccent:       ui.Hex("#ffffff"),
+		cardShade:      ui.RGBA(0, 0, 0, 0.50),
+		surface:        ui.Hex("#191630"),
+		surfaceHover:   ui.Hex("#221d3c"),
+		surfacePressed: ui.Hex("#2a2447"),
+		border:         ui.Hex("#3a3160"),
+	}
+}
+
+// duskPalette is 午夜青橙: a midnight blue night with a warm orange, cold cyan
+// against it.
+func duskPalette() palette {
+	return palette{
+		dark:           true,
+		bg:             ui.Hex("#101827"),
+		sidebar:        ui.Hex("#16202f"),
+		text:           ui.Hex("#f2f4f8"),
+		muted:          ui.RGBA(242, 244, 248, 0.58),
+		faint:          ui.RGBA(242, 244, 248, 0.30),
+		hairline:       ui.RGBA(57, 213, 229, 0.16),
+		hover:          ui.RGBA(255, 107, 74, 0.09),
+		press:          ui.RGBA(255, 107, 74, 0.16),
+		accent:         ui.Hex("#ff6b4a"),
+		onAccent:       ui.Hex("#20100b"),
+		cardShade:      ui.RGBA(0, 0, 0, 0.50),
+		surface:        ui.Hex("#1b2536"),
+		surfaceHover:   ui.Hex("#242f42"),
+		surfacePressed: ui.Hex("#2c394e"),
+		border:         ui.Hex("#38465c"),
+	}
+}
+
+// rosePalette is 电光玫红: a near black plum, lit by electric rose with an ice
+// cyan edge.
+func rosePalette() palette {
+	return palette{
+		dark:           true,
+		bg:             ui.Hex("#141018"),
+		sidebar:        ui.Hex("#1b1520"),
+		text:           ui.Hex("#f5e9f0"),
+		muted:          ui.RGBA(245, 233, 240, 0.58),
+		faint:          ui.RGBA(245, 233, 240, 0.30),
+		hairline:       ui.RGBA(125, 249, 255, 0.16),
+		hover:          ui.RGBA(255, 46, 136, 0.10),
+		press:          ui.RGBA(255, 46, 136, 0.18),
+		accent:         ui.Hex("#ff2e88"),
+		onAccent:       ui.Hex("#12060c"),
+		cardShade:      ui.RGBA(0, 0, 0, 0.50),
+		surface:        ui.Hex("#221a28"),
+		surfaceHover:   ui.Hex("#2b2032"),
+		surfacePressed: ui.Hex("#34273c"),
+		border:         ui.Hex("#46354f"),
+	}
+}
+
+// mistPalette is 雾蓝岩灰: a misty blue gray page, quiet for long reading, with
+// a brass dot.
+func mistPalette() palette {
+	return palette{
+		bg:             ui.Hex("#f4f6f8"),
+		sidebar:        ui.Hex("#eaf0f5"),
+		text:           ui.Hex("#2c3440"),
+		muted:          ui.RGBA(44, 52, 64, 0.62),
+		faint:          ui.RGBA(44, 52, 64, 0.34),
+		hairline:       ui.RGBA(107, 140, 174, 0.18),
+		hover:          ui.RGBA(107, 140, 174, 0.08),
+		press:          ui.RGBA(107, 140, 174, 0.14),
+		accent:         ui.Hex("#6b8cae"),
+		onAccent:       ui.Hex("#ffffff"),
+		cardShade:      ui.RGBA(44, 60, 80, 0.14),
+		surface:        ui.Hex("#edf1f5"),
+		surfaceHover:   ui.Hex("#e3e9ef"),
+		surfacePressed: ui.Hex("#d8e0e8"),
+		border:         ui.Hex("#c9d4de"),
+	}
+}
+
+// sagePalette is 鼠尾草绿: a low green for lists and switches, apricot for the
+// dot.
+func sagePalette() palette {
+	return palette{
+		bg:             ui.Hex("#f3f5f0"),
+		sidebar:        ui.Hex("#e9eee3"),
+		text:           ui.Hex("#2e3a30"),
+		muted:          ui.RGBA(46, 58, 48, 0.62),
+		faint:          ui.RGBA(46, 58, 48, 0.34),
+		hairline:       ui.RGBA(122, 154, 126, 0.18),
+		hover:          ui.RGBA(122, 154, 126, 0.08),
+		press:          ui.RGBA(122, 154, 126, 0.14),
+		accent:         ui.Hex("#7a9a7e"),
+		onAccent:       ui.Hex("#ffffff"),
+		cardShade:      ui.RGBA(50, 70, 55, 0.13),
+		surface:        ui.Hex("#ecf0e7"),
+		surfaceHover:   ui.Hex("#e2e8dc"),
+		surfacePressed: ui.Hex("#d7dfcf"),
+		border:         ui.Hex("#c7d1c1"),
+	}
+}
+
+// oatPalette is 燕麦米杏: oat cream with an apricot accent, the one that goes
+// with anything.
+func oatPalette() palette {
+	return palette{
+		bg:             ui.Hex("#faf6f0"),
+		sidebar:        ui.Hex("#f4ede2"),
+		text:           ui.Hex("#3a322b"),
+		muted:          ui.RGBA(58, 50, 43, 0.62),
+		faint:          ui.RGBA(58, 50, 43, 0.34),
+		hairline:       ui.RGBA(200, 169, 138, 0.24),
+		hover:          ui.RGBA(200, 169, 138, 0.12),
+		press:          ui.RGBA(200, 169, 138, 0.20),
+		accent:         ui.Hex("#c8a98a"),
+		onAccent:       ui.Hex("#3a322b"),
+		cardShade:      ui.RGBA(70, 55, 40, 0.13),
+		surface:        ui.Hex("#f5efe6"),
+		surfaceHover:   ui.Hex("#ece4d7"),
+		surfacePressed: ui.Hex("#e2d8c8"),
+		border:         ui.Hex("#d9ccb9"),
+	}
+}
+
+// kleinPalette is 克莱因蓝: International Klein Blue on a paper white, citrus
+// yellow for the dot.
+func kleinPalette() palette {
+	return palette{
+		bg:             ui.Hex("#f7f7f2"),
+		sidebar:        ui.Hex("#eeefe8"),
+		text:           ui.Hex("#111111"),
+		muted:          ui.RGBA(17, 17, 17, 0.60),
+		faint:          ui.RGBA(17, 17, 17, 0.32),
+		hairline:       ui.RGBA(0, 47, 167, 0.16),
+		hover:          ui.RGBA(0, 47, 167, 0.06),
+		press:          ui.RGBA(0, 47, 167, 0.11),
+		accent:         ui.Hex("#002fa7"),
+		onAccent:       ui.Hex("#ffffff"),
+		cardShade:      ui.RGBA(20, 25, 40, 0.14),
+		surface:        ui.Hex("#f0f1ea"),
+		surfaceHover:   ui.Hex("#e7e9df"),
+		surfacePressed: ui.Hex("#dde0d3"),
+		border:         ui.Hex("#cbcebd"),
+	}
+}
+
+// tomatoPalette is 番茄红+靛蓝: tomato on warm white, indigo for the text and a
+// steel blue for the dot.
+func tomatoPalette() palette {
+	return palette{
+		bg:             ui.Hex("#fff8f0"),
+		sidebar:        ui.Hex("#f7ebdf"),
+		text:           ui.Hex("#1d3557"),
+		muted:          ui.RGBA(29, 53, 87, 0.60),
+		faint:          ui.RGBA(29, 53, 87, 0.32),
+		hairline:       ui.RGBA(230, 57, 70, 0.14),
+		hover:          ui.RGBA(230, 57, 70, 0.06),
+		press:          ui.RGBA(230, 57, 70, 0.11),
+		accent:         ui.Hex("#e63946"),
+		onAccent:       ui.Hex("#fff8f0"),
+		cardShade:      ui.RGBA(90, 40, 40, 0.13),
+		surface:        ui.Hex("#f8efe5"),
+		surfaceHover:   ui.Hex("#f1e2d5"),
+		surfacePressed: ui.Hex("#e8d5c5"),
+		border:         ui.Hex("#dcc7b4"),
 	}
 }
 
@@ -257,69 +500,5 @@ func navyPalette() palette {
 		surfaceHover:   ui.Hex("#162c47"),
 		surfacePressed: ui.Hex("#1c3655"),
 		border:         ui.Hex("#284465"),
-	}
-}
-
-// sepiaPalette is 暖褐复古: the brown of old paper and worn leather.
-func sepiaPalette() palette {
-	return palette{
-		bg:             ui.Hex("#f2e7d5"),
-		sidebar:        ui.Hex("#ead9c0"),
-		text:           ui.Hex("#3b2c1c"),
-		muted:          ui.RGBA(80, 60, 40, 0.64),
-		faint:          ui.RGBA(80, 60, 40, 0.36),
-		hairline:       ui.RGBA(110, 80, 45, 0.14),
-		hover:          ui.RGBA(140, 100, 55, 0.06),
-		press:          ui.RGBA(140, 100, 55, 0.11),
-		accent:         ui.Hex("#8f5c2e"),
-		onAccent:       ui.Hex("#fff8ec"),
-		cardShade:      ui.RGBA(90, 60, 30, 0.16),
-		surface:        ui.Hex("#ecdfc9"),
-		surfaceHover:   ui.Hex("#e3d2b8"),
-		surfacePressed: ui.Hex("#d9c4a5"),
-		border:         ui.Hex("#cdb491"),
-	}
-}
-
-// brassPalette is 墨绿黄铜: an ink green dark with brass fittings.
-func brassPalette() palette {
-	return palette{
-		dark:           true,
-		bg:             ui.Hex("#0a1310"),
-		sidebar:        ui.Hex("#10201a"),
-		text:           ui.Hex("#e9f0e2"),
-		muted:          ui.RGBA(215, 235, 205, 0.58),
-		faint:          ui.RGBA(215, 235, 205, 0.30),
-		hairline:       ui.RGBA(201, 162, 39, 0.16),
-		hover:          ui.RGBA(201, 162, 39, 0.08),
-		press:          ui.RGBA(201, 162, 39, 0.14),
-		accent:         ui.Hex("#c9a227"),
-		onAccent:       ui.Hex("#12160a"),
-		cardShade:      ui.RGBA(0, 0, 0, 0.55),
-		surface:        ui.Hex("#14241b"),
-		surfaceHover:   ui.Hex("#1b3024"),
-		surfacePressed: ui.Hex("#22392c"),
-		border:         ui.Hex("#314a37"),
-	}
-}
-
-// winePalette is 酒红米白: wine red against the cream of a tablecloth.
-func winePalette() palette {
-	return palette{
-		bg:             ui.Hex("#fdf5f0"),
-		sidebar:        ui.Hex("#f6e6df"),
-		text:           ui.Hex("#3a2320"),
-		muted:          ui.RGBA(90, 50, 45, 0.62),
-		faint:          ui.RGBA(90, 50, 45, 0.34),
-		hairline:       ui.RGBA(140, 50, 50, 0.12),
-		hover:          ui.RGBA(150, 60, 60, 0.06),
-		press:          ui.RGBA(150, 60, 60, 0.11),
-		accent:         ui.Hex("#8c2f3d"),
-		onAccent:       ui.Hex("#fff5f2"),
-		cardShade:      ui.RGBA(90, 40, 40, 0.14),
-		surface:        ui.Hex("#f9ebe6"),
-		surfaceHover:   ui.Hex("#f2ded6"),
-		surfacePressed: ui.Hex("#ead0c6"),
-		border:         ui.Hex("#dcbdb2"),
 	}
 }
