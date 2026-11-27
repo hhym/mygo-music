@@ -2,6 +2,12 @@
 
 All notable changes to MyGo Music are written down here. Versions follow [Semantic Versioning](https://semver.org).
 
+## [0.1.35] - 2026-11-27
+
+### Added
+
+- Every plugin card has a power, which makes its plugin the source in use, lit when it already is, and a Remove, which asks before it takes the plugin away, as the plugin rows of the qianqian build have.
+
 ## [0.1.34] - 2026-11-27
 
 ### Fixed

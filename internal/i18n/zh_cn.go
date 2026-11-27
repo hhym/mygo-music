@@ -281,6 +281,7 @@ var zhCN = map[string]string{
 	"Open Plugins":              "打开插件",
 	"Allowed to start programs": "已允许启动程序",
 	"Remove %s":                 "移除 %s",
+	"Use %s":                    "使用 %s",
 	"Search Plugins":            "搜索插件",
 	"No plugins found for “%s”": "没有找到与“%s”相关的插件",
 	"Installed":                 "已安装",

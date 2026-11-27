@@ -324,6 +324,18 @@ func (a *app) pluginCard(c *ui.Context, lib *library, p palette) {
 		}
 		a.pluginUpdateError(c, lib, p)
 	}, func() {
+		// A power of its own, lit for the source in use, as the plugins page's
+		// rows have: one click makes this the one.
+		color := p.faint
+		if lib == a.library {
+			color = p.accent
+		}
+		if iconButton(c.Key("use"), iconPower, 15, color, Tf("Use %s", lib.name())).Clicked() && lib != a.library {
+			// It becomes the source in use, the page staying where it is.
+			a.activate(lib)
+			a.route.src = lib.id
+			a.redraw()
+		}
 		a.pluginUpdateButton(c, lib)
 		switch {
 		case !enabled:
@@ -342,6 +354,16 @@ func (a *app) pluginCard(c *ui.Context, lib *library, p palette) {
 		}
 		a.pluginMenu(c, lib, p)
 		a.pluginSwitch(c, lib)
+		// And the way out: a word, as the plugins page's rows have it.
+		last := len(a.libs) == 1 && a.libs[0] == lib
+		remove := ui.Button(c.Key("remove-plugin"), T("Remove")).Label(Tf("Remove %s", lib.name())).FontSize(12.5).TextColor(p.muted).
+			Disabled(last || a.installer.updating[lib.id])
+		if remove.Hovered() && !last {
+			remove.TextColor(p.text)
+		}
+		if remove.Clicked() {
+			confirmRemovePlugin(a, lib.name(), func() { a.removePlugin(lib) })
+		}
 	}, body)
 }
 
