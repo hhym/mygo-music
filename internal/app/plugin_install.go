@@ -215,6 +215,12 @@ func installError(err error) string {
 	if errors.Is(err, plugin.ErrNoRepo) {
 		return T("There's no such public repository on GitHub")
 	}
+	if bad, ok := errors.AsType[*plugin.BadRepo](err); ok {
+		return Tf("%s isn't a GitHub repository. Give it as owner/repo, or its GitHub address.", bad.Input)
+	}
+	if taken, ok := errors.AsType[*plugin.NameTaken](err); ok {
+		return Tf("A plugin called %s is already installed, from another place. Remove it first.", taken.ID)
+	}
 	if needs, ok := errors.AsType[*plugin.NeedsNewerApp](err); ok {
 		return Tf("%s needs MyGo Music %s or later. Update MyGo Music first.", needs.Plugin, needs.Version)
 	}

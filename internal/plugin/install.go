@@ -109,9 +109,19 @@ func ParseRepo(in string) (string, error) {
 	}
 	s = strings.TrimSuffix(strings.TrimSuffix(s, "/"), ".git")
 	if !repoName.MatchString(s) || strings.Contains(s, "..") {
-		return "", fmt.Errorf("not a GitHub repository: %s", strings.TrimSpace(in))
+		return "", &BadRepo{strings.TrimSpace(in)}
 	}
 	return s, nil
+}
+
+// BadRepo is an address that isn't a repository on GitHub: a word, or a page
+// that isn't one of a repository's.
+type BadRepo struct {
+	Input string
+}
+
+func (e *BadRepo) Error() string {
+	return "not a GitHub repository: " + e.Input
 }
 
 // cutPrefixFold is strings.CutPrefix, ignoring case.
@@ -616,6 +626,16 @@ func versionNumbers(tag string) ([]int, bool) {
 	return numbers, true
 }
 
+// NameTaken is a plugin that can't be installed: one of its name, from another
+// place, is in the way, with what it signed in to.
+type NameTaken struct {
+	ID string
+}
+
+func (e *NameTaken) Error() string {
+	return fmt.Sprintf("a plugin called %s is already installed", e.ID)
+}
+
 // Discard forgets a plugin that won't be installed.
 func (p *Pending) Discard() { os.RemoveAll(p.tmp) }
 
@@ -630,7 +650,7 @@ func (p *Pending) Install(dir string) error {
 		var was Origin
 		readJSON(filepath.Join(target, originFile), &was)
 		if was.Repo != p.Repo {
-			return fmt.Errorf("a plugin called %s is already installed", p.Manifest.ID)
+			return &NameTaken{p.Manifest.ID}
 		}
 	}
 	if p.Repo != "" {

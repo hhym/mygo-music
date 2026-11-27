@@ -2,6 +2,12 @@
 
 All notable changes to MyGo Music are written down here. Versions follow [Semantic Versioning](https://semver.org).
 
+## [0.1.33] - 2026-11-27
+
+### Fixed
+
+- Installing a plugin says, in Chinese too, that one of its name from another place is already installed, and that an address isn't a GitHub repository.
+
 ## [0.1.32] - 2026-11-27
 
 ### Changed
