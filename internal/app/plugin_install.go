@@ -582,16 +582,29 @@ func (a *app) installDialog(c *ui.Context, p palette) {
 			}
 			ui.Text(c, Tf("From %s", from)).FontSize(13).TextColor(p.muted).LineHeight(1.45)
 			perms := pending.Manifest.Permissions
+			var says []string
 			switch {
 			case slices.Contains(perms.Network, "*"):
-				ui.Text(c, T("Can reach any website")).FontSize(13).TextColor(p.muted)
+				says = append(says, T("Can reach any website"))
 			case len(perms.Network) > 0:
-				ui.Text(c, Tf("Can reach %s", strings.Join(perms.Network, ", "))).FontSize(13).TextColor(p.muted).LineHeight(1.45)
+				says = append(says, Tf("Can reach %s", strings.Join(perms.Network, ", ")))
 			default:
-				ui.Text(c, T("Asks for no network")).FontSize(13).TextColor(p.muted)
+				says = append(says, T("Asks for no network"))
 			}
 			if len(perms.Process) > 0 {
-				ui.Text(c, programsWarning(perms.Process)).FontSize(13).TextColor(p.muted).LineHeight(1.45)
+				says = append(says, programsWarning(perms.Process))
+			}
+			draw := func() {
+				for _, say := range says {
+					ui.Text(c, say).FontSize(13).TextColor(p.muted).LineHeight(1.45)
+				}
+			}
+			// What a plugin reaches can be a hundred hosts long: it scrolls in the
+			// room the dialog has, so that the buttons under it stay in sight.
+			if chars := len(strings.Join(says, "\n")); chars > 300 {
+				ui.Scroll(c.Key("permissions")).Height(190).Gap(4).Scrollbars(true).KeepScrollbars(true).Children(draw)
+			} else {
+				ui.Column(c).Gap(4).Children(draw)
 			}
 			problem()
 			buttons(T("Install"), in.busy, Tf("Install %s", pending.Manifest.Name), a.confirmInstall)

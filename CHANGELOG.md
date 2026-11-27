@@ -2,6 +2,12 @@
 
 All notable changes to MyGo Music are written down here. Versions follow [Semantic Versioning](https://semver.org).
 
+## [0.1.34] - 2026-11-27
+
+### Fixed
+
+- A plugin that reaches a hundred hosts no longer makes the install dialog taller than the screen, which put its Install button out of reach: what it reaches scrolls in a box of its own, with the scrollbar showing.
+
 ## [0.1.33] - 2026-11-27
 
 ### Fixed
